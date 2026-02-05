@@ -1,4 +1,4 @@
-## Hardware map
+# Hardware map
 
 Deze map bevat alles wat nodig is voor de hardwarekant van de Netwerkscanner. Het doel is om de fysieke opstelling, schema’s en configuraties te documenteren zodat de hardware gemakkelijk opgebouwd, nagekeken en gereproduceerd kan worden.
 

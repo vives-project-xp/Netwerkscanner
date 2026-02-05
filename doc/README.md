@@ -1,4 +1,4 @@
-## Documentatie map
+# Documentatie map
 
 Deze map bevat alle projectdocumentatie voor de Netwerkscanner. Het doel is om de keuzes, ontwerpen en instructies die niet in de broncode thuishoren, centraal te bewaren zodat het project makkelijk te begrijpen, te onderhouden en te presenteren is.
 
