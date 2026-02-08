@@ -31,3 +31,27 @@ min = -78
 max = -79  
 
 Gevonden netwerken nu tussen 6 en 8, een grote verbetering.  
+
+# test 3
+
+1. WiFi.scanNetworks(false, true, false, 80);
+
+resultaat  
+```
+gemiddelde voor 1 scan = 5395
+gemiddelde voor 1 scan = 5395
+gemiddelde voor 1 scan = 5395
+```
+
+2. WiFi.scanNetworks(false, true, true, 80); prob aan.  
+
+resultaat  
+```
+gemiddelde voor 1 scan = 1128
+gemiddelde voor 1 scan = 1128
+gemiddelde voor 1 scan = 1128
+gemiddelde voor 1 scan = 1128
+```
+
+478% sneller. Dit klop beter met de berekende tijd 14ch * 80ms = 1120.  
+Scantijden blijven ook heel consistent.

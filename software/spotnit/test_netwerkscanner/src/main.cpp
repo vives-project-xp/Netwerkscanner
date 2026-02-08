@@ -8,33 +8,25 @@
 
 #include "WiFi.h"
 
-void setup() {
-  Serial.begin(115200);
-
-  // Set WiFi to station mode and disconnect from an AP if it was previously
-  // connected.
-  WiFi.mode(WIFI_STA);
-  WiFi.setSleep(false);//maakt RSSI meten veel nauwkeuriger
-  WiFi.disconnect();
-  delay(100);
-
-  Serial.println("Setup done");
-}
-
-void loop() {
+void test1_2()
+{
   Serial.println("Scan start");
 
   // WiFi.scanNetworks will return the number of networks found.
-  int n = WiFi.scanNetworks();
+  int n = WiFi.scanNetworks(false, true, false, 80);
   Serial.println("Scan done");
-  if (n == 0) {
+  if (n == 0)
+  {
     Serial.println("no networks found");
-  } else {
+  }
+  else
+  {
     Serial.print(n);
     Serial.println(" networks found");
     Serial.println(
         "Nr | SSID                             | RSSI |  | BSSID                    | CH | Encryption");
-    for (int i = 0; i < n; ++i) {
+    for (int i = 0; i < n; ++i)
+    {
       // Print SSID and RSSI for each network found
       Serial.printf("%2d", i + 1);
       Serial.print(" | ");
@@ -52,36 +44,37 @@ void loop() {
       Serial.printf("%2d", WiFi.channel(i));
       Serial.print(" | ");
 
-      switch (WiFi.encryptionType(i)) {
-        case WIFI_AUTH_OPEN:
-          Serial.print("open");
-          break;
-        case WIFI_AUTH_WEP:
-          Serial.print("WEP");
-          break;
-        case WIFI_AUTH_WPA_PSK:
-          Serial.print("WPA");
-          break;
-        case WIFI_AUTH_WPA2_PSK:
-          Serial.print("WPA2");
-          break;
-        case WIFI_AUTH_WPA_WPA2_PSK:
-          Serial.print("WPA+WPA2");
-          break;
-        case WIFI_AUTH_WPA2_ENTERPRISE:
-          Serial.print("WPA2-EAP");
-          break;
-        case WIFI_AUTH_WPA3_PSK:
-          Serial.print("WPA3");
-          break;
-        case WIFI_AUTH_WPA2_WPA3_PSK:
-          Serial.print("WPA2+WPA3");
-          break;
-        case WIFI_AUTH_WAPI_PSK:
-          Serial.print("WAPI");
-          break;
-        default:
-          Serial.print("unknown");
+      switch (WiFi.encryptionType(i))
+      {
+      case WIFI_AUTH_OPEN:
+        Serial.print("open");
+        break;
+      case WIFI_AUTH_WEP:
+        Serial.print("WEP");
+        break;
+      case WIFI_AUTH_WPA_PSK:
+        Serial.print("WPA");
+        break;
+      case WIFI_AUTH_WPA2_PSK:
+        Serial.print("WPA2");
+        break;
+      case WIFI_AUTH_WPA_WPA2_PSK:
+        Serial.print("WPA+WPA2");
+        break;
+      case WIFI_AUTH_WPA2_ENTERPRISE:
+        Serial.print("WPA2-EAP");
+        break;
+      case WIFI_AUTH_WPA3_PSK:
+        Serial.print("WPA3");
+        break;
+      case WIFI_AUTH_WPA2_WPA3_PSK:
+        Serial.print("WPA2+WPA3");
+        break;
+      case WIFI_AUTH_WAPI_PSK:
+        Serial.print("WAPI");
+        break;
+      default:
+        Serial.print("unknown");
       }
       Serial.println();
       delay(10);
@@ -93,5 +86,38 @@ void loop() {
   WiFi.scanDelete();
 
   // Wait a bit before scanning again.
-  delay(5000);
+}
+
+void test3()
+{
+  const int scans = 10;
+  unsigned int timeStart = 0;
+  unsigned int timeStop = 0;
+  timeStart = millis();
+  for (int i = 0; i < scans; i++)
+  {
+    WiFi.scanNetworks(false, true, true, 80); // online repo kiest ook 80ms per channel 
+  }
+  timeStop = millis();
+  Serial.println("gemiddelde voor 1 scan = " + String((timeStop - timeStart) / scans));
+}
+
+void setup()
+{
+  Serial.begin(115200);
+
+  // Set WiFi to station mode and disconnect from an AP if it was previously
+  // connected.
+  WiFi.mode(WIFI_STA);
+  WiFi.setSleep(false); // maakt RSSI meten veel nauwkeuriger
+  WiFi.disconnect();
+  delay(100);
+
+  Serial.println("Setup done");
+}
+
+void loop()
+{
+  // test1_2();
+  test3();
 }
