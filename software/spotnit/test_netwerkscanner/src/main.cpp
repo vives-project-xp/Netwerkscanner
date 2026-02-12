@@ -8,7 +8,7 @@
 
 #include "WiFi.h"
 
-void test1_2()
+void test1_2() // vind alle netwerken.
 {
   Serial.println("Scan start");
 
@@ -88,18 +88,44 @@ void test1_2()
   // Wait a bit before scanning again.
 }
 
-void test3()
+void test3() // snelheid test
 {
+
   const int scans = 10;
   unsigned int timeStart = 0;
   unsigned int timeStop = 0;
   timeStart = millis();
   for (int i = 0; i < scans; i++)
   {
-    WiFi.scanNetworks(false, true, true, 80); // online repo kiest ook 80ms per channel 
+    WiFi.scanNetworks(false, true, true, 80); // online repo kiest ook 80ms per channel
   }
   timeStop = millis();
   Serial.println("gemiddelde voor 1 scan = " + String((timeStop - timeStart) / scans));
+}
+
+float RssiToMeter(int rssi)
+{
+  const int rssiOp1Meter = -40;      // rssi waarde op 1 meter
+  const int propagationConstant = 3; // hoe goed kan het signaal in de ruimte bewegen.
+  return powf(10, (rssiOp1Meter - rssi) / (10.0f * propagationConstant));
+}
+
+void Trilateratie()
+{
+  int aantalNetwerken = 0;
+  do
+  {
+    aantalNetwerken = WiFi.scanNetworks(false, true, true, 80);
+  } while (aantalNetwerken < 3);
+
+  const float p1Start = RssiToMeter(WiFi.RSSI(0));
+  const float p2Start = RssiToMeter(WiFi.RSSI(1));
+  const float p3Start = RssiToMeter(WiFi.RSSI(2));
+
+  float RelativePosition[2] = {0, 0};
+  while (true)
+  {
+  }
 }
 
 void setup()
@@ -118,6 +144,6 @@ void setup()
 
 void loop()
 {
-  // test1_2();
-  test3();
+  test1_2();
+  // test3();
 }

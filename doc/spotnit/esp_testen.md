@@ -43,7 +43,7 @@ gemiddelde voor 1 scan = 5395
 gemiddelde voor 1 scan = 5395
 ```
 
-2. WiFi.scanNetworks(false, true, true, 80); prob aan.  
+2. ```WiFi.scanNetworks(false, true, true, 80);``` prob aan.  
 
 resultaat  
 ```
@@ -55,3 +55,52 @@ gemiddelde voor 1 scan = 1128
 
 478% sneller. Dit klop beter met de berekende tijd 14ch * 80ms = 1120.  
 Scantijden blijven ook heel consistent.
+
+
+op school ook dezelfde tijden  
+```
+gemiddelde voor 1 scan = 1129
+gemiddelde voor 1 scan = 1129
+gemiddelde voor 1 scan = 1129
+```
+
+test op school
+´´´
+Scan start
+Scan done
+28 networks found
+Nr | SSID                             | RSSI |  | BSSID                    | CH | Encryption
+ 1 | DIRECT-HC0S1EBB00701GOAD         |  -44 |  | BSSID: 11:BB:9E:95:AB:22 | 11 | WPA2
+ 2 | MPSK                             |  -59 |  | BSSID: 11:BA:25:4F:EB:22 | 11 | WPA2
+ 3 | eduroam                          |  -59 |  | BSSID: 11:BA:25:4F:EB:22 | 11 | WPA2-EAP
+ 4 | campusroam                       |  -59 |  | BSSID: 11:BA:25:4F:EB:22 | 11 | WPA2-EAP
+ 5 | VIVES-GUEST                      |  -59 |  | BSSID: 11:BA:25:4F:EB:22 | 11 | open
+ 6 |                                  |  -59 |  | BSSID: 11:BA:25:4F:EB:22 | 11 | WPA2
+ 7 | VIVES-EVENT                      |  -59 |  | BSSID: 11:BA:25:4F:EB:22 | 11 | open
+ 8 |                                  |  -59 |  | BSSID: 11:BA:25:4F:EB:22 | 11 | WPA2
+ 9 | devbit                           |  -60 |  | BSSID: 11:8B:A9:15:5F:22 |  1 | WPA2
+10 | iotlab                           |  -60 |  | BSSID: 11:8B:A9:15:5F:22 |  1 | WPA2
+11 | devbit                           |  -70 |  | BSSID: 11:8B:A9:15:60:22 |  6 | WPA2
+12 | iotlab                           |  -70 |  | BSSID: 11:8B:A9:15:60:22 |  6 | WPA2
+13 | campusroam                       |  -73 |  | BSSID: 11:BA:25:50:1B:22 |  1 | WPA2-EAP
+14 |                                  |  -73 |  | BSSID: 11:BA:25:50:1B:22 |  1 | WPA2
+15 |                                  |  -73 |  | BSSID: 11:BA:25:50:1B:22 |  1 | WPA2
+16 | eduroam                          |  -74 |  | BSSID: 11:BA:25:50:1B:22 |  1 | WPA2-EAP
+17 | MPSK                             |  -74 |  | BSSID: 11:BA:25:50:1B:22 |  1 | WPA2
+18 | VIVES-EVENT                      |  -74 |  | BSSID: 11:BA:25:50:1B:22 |  1 | open
+19 | Coco 🥥                         |  -77 |  | BSSID: 11:DD:00:4E:02:22|  6 | WPA2+WPA3
+20 | campusroam                       |  -83 |  | BSSID: 11:BA:25:50:27:22 | 11 | WPA2-EAP
+21 |                                  |  -84 |  | BSSID: 11:BA:25:50:27:22 | 11 | WPA2
+22 | VIVES-EVENT                      |  -84 |  | BSSID: 11:BA:25:50:27:22 | 11 | open
+23 |                                  |  -84 |  | BSSID: 11:BA:25:50:27:22 | 11 | WPA2
+24 | MPSK                             |  -84 |  | BSSID: 11:BA:25:50:27:22 | 11 | WPA2
+25 | eduroam                          |  -84 |  | BSSID: 11:BA:25:50:27:22 | 11 | WPA2-EAP
+26 | VIVES-GUEST                      |  -87 |  | BSSID: 11:BA:25:50:26:22 |  1 | open
+27 | MPSK                             |  -88 |  | BSSID: 11:BA:25:50:26:22 |  1 | WPA2
+28 | VIVES-EVENT                      |  -89 |  | BSSID: 11:BA:25:50:26:22 |  1 | open
+´´´
+
+Als we goed kijken zien we dat sommige netwerken een bijna identiek bssid hebben.
+Enkel de laatste waarde veranderd. 1 acces point heeft meerdere netwerken die hij uitstuurt.  
+
+Dit is belangrijk om te weten omdat als we triangulatie willen doen dat we niet met 3 dezelfde de positie proberen te bepalen.
