@@ -46,3 +46,8 @@
 | 2S LiPo batterij              | LiPo                 | 7.4V              | 1.000–5.000 mAh      | Ja (BMS + buck)          | Efficiënte spanningsregeling mogelijk | Hogere complexiteit | Geavanceerde builds |
 | 18650 DIY Powerbank module    | Li-ion (18650)       | 5V uitgang        | Afhankelijk van cel  | Nee (meestal ingebouwd)  | Zelf cellen kiezen, 5V output | Kwaliteit varieert | Semi-custom oplossing |
 
+## Displays:
+
+| 5 inch touchscreen 52 euro |https://www.hobbyelectronica.nl/product/5-0-ips-capacitive-touchscreen-esp32-8048s050c-i/ |
+| 4.3 inch touchscreen 39 euro | https://www.hobbyelectronica.nl/product/4-3-ips-capacitive-touchscreen-esp32-8048s043c-i |
+| 3.5 inch touch 24 euro (specifiek voor ESP) | https://www.hobbyelectronica.nl/product/esp32-3-5-tft-480-320-touch/ |
