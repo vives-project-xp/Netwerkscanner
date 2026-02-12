@@ -29,4 +29,25 @@
 | **[2.4GHz Whip Rubber Antenna]()**                        |    2.4 GHz |       SMA       | Eenvoudige whip antenne – werkt met adapters.                                           |
 | **[Alfa Network 2.4GHz 15dBi omni antenne]()**            |    2.4 GHz |      RP‑SMA     | Hoog‑gain omni antenne – geschikt voor lange‑afstand Wi‑Fi (met adapter).               |
                                                                                                                                                                 |
+| Module                     | CPU / Core                | Wi-Fi        | Bluetooth     | Externe antenne | Voordelen | Nadelen | Aanbevolen gebruik |
+|----------------------------|--------------------------|-------------|--------------|-----------------|-----------|----------|--------------------|
+| ESP32-WROOM-32U            | Dual-core 240 MHz        | 2.4 GHz     | BT + BLE     | Ja (u.FL)      | Zeer stabiel, veel support, goed voor promiscuous mode | Iets hoger verbruik | Allround netwerk scanner |
+| ESP32-S3-WROOM-1U          | Dual-core 240 MHz LX7    | 2.4 GHz     | BLE 5        | Ja (u.FL)      | Native USB, moderner, betere power management | Iets duurder | USB logging + data analyse |
+| ESP32-C3-WROOM-02U         | Single-core 160 MHz RISC-V | 2.4 GHz  | BLE 5        | Ja (u.FL)      | Energiezuinig, compact, goedkoop | Minder rekenkracht | Batterij-geoptimaliseerde scanner |
+| ESP32-C6-WROOM-1U          | Single-core 160 MHz RISC-V | 2.4 GHz (Wi-Fi 6) | BLE 5 + 802.15.4 | Ja (u.FL) | Nieuwste generatie, toekomstgericht | Nog minder mature support | Experimenteel / Wi-Fi 6 scanning |
+| ESP8266 (ESP-07)           | Single-core 80–160 MHz   | 2.4 GHz     | Geen         | Ja (u.FL)      | Zeer goedkoop | Beperkte sniffing support, ouder | Low-budget project |
 
+| Optie                         | Type                 | Nominale spanning | Capaciteit (typisch) | Extra elektronica nodig | Voordelen | Nadelen | Aanbevolen gebruik |
+|--------------------------------|----------------------|-------------------|----------------------|--------------------------|------------|----------|--------------------|
+| USB Powerbank (5V output)     | Li-ion intern        | 5V uitgang        | 5.000–20.000 mAh     | Nee                      | Plug & play, ingebouwde bescherming, stabiele 5V | Minder controle over power management | Snelle prototype / eenvoudige voeding |
+| 1x 18650 Li-ion cel           | Li-ion               | 3.7V (4.2V max)   | 2.000–3.500 mAh      | Ja (TP4056 + boost)      | Compact, goedkoop, vervangbaar | Extra laad- en boostcircuit nodig | Custom compacte scanner |
+| 2x 18650 in serie (2S)        | Li-ion               | 7.4V (8.4V max)   | 2.000–3.500 mAh      | Ja (BMS + buck converter)| Hogere efficiëntie bij buck naar 5V | Complexer, BMS vereist | Langere runtime systemen |
+| 1S LiPo batterij              | LiPo                 | 3.7V (4.2V max)   | 500–5.000 mAh        | Ja (laadmodule + evt. boost) | Licht, plat, ideaal voor handheld | Mechanisch gevoeliger | Compacte handheld scanner |
+| 2S LiPo batterij              | LiPo                 | 7.4V              | 1.000–5.000 mAh      | Ja (BMS + buck)          | Efficiënte spanningsregeling mogelijk | Hogere complexiteit | Geavanceerde builds |
+| 18650 DIY Powerbank module    | Li-ion (18650)       | 5V uitgang        | Afhankelijk van cel  | Nee (meestal ingebouwd)  | Zelf cellen kiezen, 5V output | Kwaliteit varieert | Semi-custom oplossing |
+
+## Displays:
+
+| 5 inch touchscreen 52 euro |https://www.hobbyelectronica.nl/product/5-0-ips-capacitive-touchscreen-esp32-8048s050c-i/ |
+| 4.3 inch touchscreen 39 euro | https://www.hobbyelectronica.nl/product/4-3-ips-capacitive-touchscreen-esp32-8048s043c-i |
+| 3.5 inch touch 24 euro (specifiek voor ESP) | https://www.hobbyelectronica.nl/product/esp32-3-5-tft-480-320-touch/ |
