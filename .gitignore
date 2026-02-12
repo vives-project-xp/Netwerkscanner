@@ -1,0 +1,39 @@
+# PlatformIO
+.pio/
+.venv/
+.cache/
+*.o
+*.a
+*.so
+build/
+dist/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-*
+.DS_Store
+
+# Dependencies
+node_modules/
+vendor/
+.env
+.venv/
+
+# Build output
+*.bin
+*.elf
+*.hex
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/

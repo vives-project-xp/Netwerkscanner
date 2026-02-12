@@ -46,4 +46,4 @@ Het project heeft als doel een read-only netwerkscanner te ontwikkelen die een o
 
 - GDPR-principes worden gevolgd
 
----
+---"
