@@ -1,106 +1,85 @@
 #include <Arduino.h>
-
-/*
- *  ESP32 WiFi Scanner Example. Examples > WiFi > WiFiScan
- *  Full Tutorial @
- * https://deepbluembedded.com/esp32-wifi-library-examples-tutorial-arduino/
- */
-
+#include <iostream>
+#include <String>
+#include <vector>
 #include "WiFi.h"
 
-void test1_2() // vind alle netwerken.
+using namespace std;
+
+#include "test1_2_3.h"
+
+//---------------------------------
+class AccesPoint
 {
-  Serial.println("Scan start");
+private:
+  float x = 0.0f;
+  float y = 0.0f;
+  std::vector<int> rssi;
+  std::vector<String> ssid;
 
-  // WiFi.scanNetworks will return the number of networks found.
-  int n = WiFi.scanNetworks(false, true, false, 80);
-  Serial.println("Scan done");
-  if (n == 0)
+public:
+  // Constructor
+  AccesPoint(float xVal = 0.0f, float yVal = 0.0f) : x(xVal), y(yVal) {}
+
+  // Getters
+  float GetX() const
   {
-    Serial.println("no networks found");
+    return x;
   }
-  else
+
+  float GetY() const
   {
-    Serial.print(n);
-    Serial.println(" networks found");
-    Serial.println(
-        "Nr | SSID                             | RSSI |  | BSSID                    | CH | Encryption");
-    for (int i = 0; i < n; ++i)
+    return y;
+  }
+
+  // Setters
+  void SetX(float xVal)
+  {
+    x = xVal;
+  }
+
+  void SetY(float yVal)
+  {
+    y = yVal;
+  }
+
+  void SetPos(float xVal, float yVal)
+  {
+    x = xVal;
+    y = yVal;
+  }
+  float GetAverageRssi()
+  {
+    int vectorSize = rssi.size();
+    if (rssi.size() == 0)
+      return 0.0f;
+
+    int sum = 0;
+    for (int i = 0; i < vectorSize; i++)
     {
-      // Print SSID and RSSI for each network found
-      Serial.printf("%2d", i + 1);
-      Serial.print(" | ");
+      sum += rssi[i];
+    }
+    return sum / (float)vectorSize;
+  }
+};
+int filter()
+{ // kalman-filter
 
-      Serial.printf("%-32.32s", WiFi.SSID(i).c_str());
-      Serial.print(" | ");
+  return 0;
+};
 
-      Serial.printf("%4d", WiFi.RSSI(i));
-      Serial.print(" | ");
-
-      Serial.print(" | BSSID: ");
-      Serial.print(WiFi.BSSIDstr(i));
-      Serial.print(" | ");
-
-      Serial.printf("%2d", WiFi.channel(i));
-      Serial.print(" | ");
-
-      switch (WiFi.encryptionType(i))
-      {
-      case WIFI_AUTH_OPEN:
-        Serial.print("open");
-        break;
-      case WIFI_AUTH_WEP:
-        Serial.print("WEP");
-        break;
-      case WIFI_AUTH_WPA_PSK:
-        Serial.print("WPA");
-        break;
-      case WIFI_AUTH_WPA2_PSK:
-        Serial.print("WPA2");
-        break;
-      case WIFI_AUTH_WPA_WPA2_PSK:
-        Serial.print("WPA+WPA2");
-        break;
-      case WIFI_AUTH_WPA2_ENTERPRISE:
-        Serial.print("WPA2-EAP");
-        break;
-      case WIFI_AUTH_WPA3_PSK:
-        Serial.print("WPA3");
-        break;
-      case WIFI_AUTH_WPA2_WPA3_PSK:
-        Serial.print("WPA2+WPA3");
-        break;
-      case WIFI_AUTH_WAPI_PSK:
-        Serial.print("WAPI");
-        break;
-      default:
-        Serial.print("unknown");
-      }
-      Serial.println();
-      delay(10);
+int findAP(String mac, int aantalNetwerken)
+{
+  mac = mac.substring(0, mac.length() - 2);
+  for (int i = 0; i < aantalNetwerken; ++i)
+  {
+    String MAC = WiFi.BSSIDstr(i);
+    if (MAC.indexOf(mac) >= 0)
+    {
+      return i;
     }
   }
-  Serial.println("");
-
-  // Delete the scan result to free memory for code below.
-  WiFi.scanDelete();
-
-  // Wait a bit before scanning again.
-}
-
-void test3() // snelheid test
-{
-
-  const int scans = 10;
-  unsigned int timeStart = 0;
-  unsigned int timeStop = 0;
-  timeStart = millis();
-  for (int i = 0; i < scans; i++)
-  {
-    WiFi.scanNetworks(false, true, true, 80); // online repo kiest ook 80ms per channel
-  }
-  timeStop = millis();
-  Serial.println("gemiddelde voor 1 scan = " + String((timeStop - timeStart) / scans));
+  return -1;
 }
 
 float RssiToMeter(int rssi)
@@ -115,17 +94,56 @@ void Trilateratie()
   int aantalNetwerken = 0;
   do
   {
-    aantalNetwerken = WiFi.scanNetworks(false, true, true, 80);
+    aantalNetwerken = WiFi.scanNetworks(false, true, true, 100);
   } while (aantalNetwerken < 3);
 
-  const float p1Start = RssiToMeter(WiFi.RSSI(0));
-  const float p2Start = RssiToMeter(WiFi.RSSI(1));
-  const float p3Start = RssiToMeter(WiFi.RSSI(2));
+  Serial.println("found networks " + String(aantalNetwerken));
 
-  float RelativePosition[2] = {0, 0};
-  while (true)
+  int net1 = findAP("A8:BA:25:50:A5:90", aantalNetwerken);
+  int net2 = findAP("A8:BA:25:50:26:70", aantalNetwerken);
+  int net3 = findAP("A8:BA:25:50:55:E0", aantalNetwerken);
+
+  Serial.println("net1= " + String(net1));
+  Serial.println("net2= " + String(net2));
+  Serial.println("net3= " + String(net3));
+
+  if (net1 == -1 || net2 == -1 || net3 == -1)
   {
+    return;
   }
+
+  AccesPoint accessPoint1(0, 0);
+  AccesPoint accessPoint2(15, 0);
+  AccesPoint accessPoint3(15, 9);
+  AccesPoint device;
+
+  float distance1 = RssiToMeter(WiFi.RSSI(net1));
+  float distance2 = RssiToMeter(WiFi.RSSI(net2));
+  float distance3 = RssiToMeter(WiFi.RSSI(net3));
+
+  Serial.println("afstand 1 = " + String(distance1));
+  Serial.println("afstand 2 = " + String(distance2));
+  Serial.println("afstand 3 = " + String(distance3));
+
+  float A = 2 * (accessPoint1.GetX() - accessPoint2.GetX());
+  float B = 2 * (accessPoint1.GetY() - accessPoint2.GetY());
+  float C = distance2 * distance2 - distance1 * distance1 + accessPoint2.GetX() * accessPoint2.GetX() - accessPoint1.GetX() * accessPoint1.GetX() + accessPoint2.GetY() * accessPoint2.GetY() - accessPoint1.GetY() * accessPoint1.GetY();
+
+  float D = 2 * (accessPoint1.GetX() - accessPoint3.GetX());
+  float E = 2 * (accessPoint1.GetY() - accessPoint3.GetY());
+  float F = distance3 * distance3 - distance1 * distance1 + accessPoint3.GetX() * accessPoint3.GetX() - accessPoint1.GetX() * accessPoint1.GetX() + accessPoint3.GetY() * accessPoint3.GetY() - accessPoint1.GetY() * accessPoint1.GetY();
+
+  float denominator = (A * E - B * D);
+
+  device.SetX((C * E - B * F) / denominator);
+  device.SetY((A * F - C * D) / denominator);
+
+  Serial.print("device X: ");
+  Serial.println(device.GetX());
+
+  Serial.print("device Y: ");
+  Serial.println(device.GetY());
+  WiFi.scanDelete();
 }
 
 void setup()
@@ -144,6 +162,7 @@ void setup()
 
 void loop()
 {
-  test1_2();
-  // test3();
+  // test1_2();
+  //   test3();
+  Trilateratie();
 }
