@@ -40,3 +40,7 @@ __pycache__/
 
 # Logs
 *.txt
+
+#me
+Netwerkscanner.code-workspace
+
