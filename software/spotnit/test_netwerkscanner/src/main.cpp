@@ -9,8 +9,8 @@ using namespace std;
 #include "debug.h"
 bool debugStatus = true;
 
-//#include "test1_2_3.h"
-//#include "test_trilateratie.h"
+#include "test1_2_3.h"
+#include "test_trilateratie.h"
 #include "trilateratie_n_points.h"
 
 //---------------------------------
