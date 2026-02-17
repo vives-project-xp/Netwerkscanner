@@ -24,7 +24,7 @@ void VisualTrilateratie(const std::vector<AccessPoint> &aps,
     Serial.println("start VisualTrilateratie");
 
     int n = aps.size();
-    for (int i = 1; i < n; i++)
+    for (int i = 0; i < n; i++)
     {
         Serial.println("VisualTrilateratie: apX" + String(aps[i].GetX()));
         Serial.println("VisualTrilateratie: apY" + String(aps[i].GetY()));
@@ -140,12 +140,12 @@ void test_TrilateratieLeastSquares()
                                     {0.0, 10.0},
                                     {0, 0}};
 
-    // Example: device is around (5,5) but distances are noisy
+    
     std::vector<double> distances = {
-        1, // real should be 7.071
-        4,
-        4,
-        4};
+        6, 
+        6,
+        6,
+        7};
 
     AccessPoint device;
     trilaterationResult resultaat = TrilateratieLeastSquares(aps, distances);
