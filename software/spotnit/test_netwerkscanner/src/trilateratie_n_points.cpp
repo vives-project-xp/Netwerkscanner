@@ -2,12 +2,6 @@
 // https://gis.stackexchange.com/questions/40660/trilateration-algorithm-for-n-amount-of-points
 // Least Squares Trilateration
 #include <Arduino.h>
-
-// input een lijst van alle access points
-//  haalt de locatie van de access points
-//  vul in de afstand van device naar access point
-//  geef een geschatte locatie en radius waarbinnen het device kan liggen.
-
 #include <iostream>
 #include <vector>
 #include <cmath>
@@ -23,19 +17,40 @@ struct trilaterationResult
     float RMSE;
 };
 
+void VisualTrilateratie(const std::vector<AccessPoint> &aps,
+                        const std::vector<double> &distances,
+                        float deviceX, float deviceY, float RMSE)
+{
+    Serial.println("start VisualTrilateratie");
+
+    int n = aps.size();
+    for (int i = 1; i < n; i++)
+    {
+        Serial.println("VisualTrilateratie: apX" + String(aps[i].GetX()));
+        Serial.println("VisualTrilateratie: apY" + String(aps[i].GetY()));
+        Serial.println("VisualTrilateratie: distance" + String(distances[i]));
+    }
+    Serial.println("VisualTrilateratie: deviceX" + String(deviceX));
+    Serial.println("VisualTrilateratie: deviceY" + String(deviceY));
+    Serial.println("VisualTrilateratie: RMSE" + String(RMSE));
+
+    Serial.println("end VisualTrilateratie");
+}
+
 // Solve 2x2 linear system:
 // [a b][x] = [e]
-// [c d][y]   [f]
+// [c d][y] = [f]
+//& betekent dat de waarde niet gekopieerd wordt maar regstreeks zal worden aangepast
 bool solve2x2(double a, double b, double c, double d,
               double e, double f,
               double &outX, double &outY)
 {
-    double det = a * d - b * c;
-    if (std::fabs(det) < 1e-9)
+    double determinant = a * d - b * c;
+    if (std::fabs(determinant) < 1e-9) // kijkt of determinant niet te klein is
         return false;
 
-    outX = (e * d - b * f) / det;
-    outY = (a * f - e * c) / det;
+    outX = (e * d - b * f) / determinant; // regel van Cramer
+    outY = (a * f - e * c) / determinant;
     return true;
 }
 
@@ -47,14 +62,14 @@ trilaterationResult TrilateratieLeastSquares(const std::vector<AccessPoint> &aps
 
     if (n < 3 || distances.size() != aps.size())
     {
-        debugln("minimum 3 access points nodig, ");
+        debugln("minimum 3 access points nodig, of aantal afstanden en access points komen niet overeen");
         return {0, 0, 0};
     }
 
     // Use first AP as reference
-    double x1 = (float) aps[0].GetX();
-    double y1 = (float) aps[0].GetY();
-    double d1 = (float) distances[0];
+    double x1 = (float)aps[0].GetX();
+    double y1 = (float)aps[0].GetY();
+    double d1 = (float)distances[0];
 
     // We build system: A * p = b
     // where p = [x, y]
@@ -112,24 +127,25 @@ trilaterationResult TrilateratieLeastSquares(const std::vector<AccessPoint> &aps
         double err = predicted - distances[i];
         errorSum += err * err;
     }
-
-    return {(float)x, (float)y, (float)std::sqrt(errorSum / n)};
+    float RMSE = (float)std::sqrt(errorSum / n);
+    VisualTrilateratie(aps, distances, x, y, RMSE);
+    return {(float)x, (float)y, RMSE};
 }
 
 void test_TrilateratieLeastSquares()
 {
-    std::vector<AccessPoint> aps = {
-        {0.0, 0.0},
-        {10.0, 0.0},
-        {0.0, 10.0},
-        {10.0, 10.0}};
+    std::vector<AccessPoint> aps = {// mogen in willekeurige volgorde, moet niet met 0,0 starten
+                                    {10, 10},
+                                    {10.0, 0.0},
+                                    {0.0, 10.0},
+                                    {0, 0}};
 
     // Example: device is around (5,5) but distances are noisy
     std::vector<double> distances = {
-        5, // real should be 7.071
-        5,
-        5,
-        5};
+        1, // real should be 7.071
+        4,
+        4,
+        4};
 
     AccessPoint device;
     trilaterationResult resultaat = TrilateratieLeastSquares(aps, distances);
