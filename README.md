@@ -17,7 +17,7 @@ de studenten die aan dit project werken zijn:
 | Kyell De Windt     | [<img src="https://github.com/kyell182.png" width="50" height="50">](https://github.com/kyell182)           |
 | Ilias Lagrane      | [<img src="https://github.com/IliasLagrane.png" width="50" height="50">](https://github.com/IliasLagrane)   |
 | Kevin Bakeland     | [<img src="https://github.com/KevinBakeland.png" width="50" height="50">](https://github.com/KevinBakeland) |
-| Gelder Coudenys    | [<img src="https://github.com/Spotnit.png" width="50" height="50">](https://github.com/Spotnit)             |
+| Spotnit            | [<img src="https://github.com/Spotnit.png" width="50" height="50">](https://github.com/Spotnit)             |
 
 ## Functies
 
