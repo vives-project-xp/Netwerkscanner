@@ -138,13 +138,15 @@ void test_TrilateratieLeastSquares()
                                     {10, 10},
                                     {10.0, 0.0},
                                     {0.0, 10.0},
+                                    {5, 15},
                                     {0, 0}};
 
     
     std::vector<double> distances = {
-        6, 
-        6,
-        6,
+        7, 
+        7,
+        7,
+        10,
         7};
 
     AccessPoint device;

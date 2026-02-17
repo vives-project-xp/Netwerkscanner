@@ -4,6 +4,9 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import time
 from matplotlib.widgets import Button
+# gemaakt door chat-gpt
+# pip install -r requirements.txt
+# py visual_serial.py
 
 BAUDRATE = 112500
 UPDATE_INTERVAL = 0.1  # Iets sneller voor vloeiende weergave
@@ -32,7 +35,7 @@ paused = False
 
 # Setup plot
 plt.ion()
-fig, ax = plt.subplots(figsize=(5, 5))
+fig, ax = plt.subplots(figsize=(7, 5))
 plt.subplots_adjust(bottom=0.2)  # ruimte voor de knop
 
 # Callback functie voor pauze knop
@@ -68,8 +71,13 @@ def draw_plot():
 
     # Device tekenen
     if deviceX is not None and deviceY is not None:
+        # Maak de tekst met X, Y en RMSE
+        text_str = f"Device\nX={deviceX:.2f}, Y={deviceY:.2f}"
+        if rmse is not None:
+            text_str += f"\n    RMSE={rmse:.2f}"  # voeg RMSE toe op een nieuwe regel
+
         ax.scatter(deviceX, deviceY, marker="x", s=200, c='red', linewidth=3)
-        ax.text(deviceX + 0.2, deviceY + 0.2, f"Device\nX={deviceX:.2f}, Y={deviceY:.2f}", 
+        ax.text(deviceX + 0.2, deviceY + 0.2, text_str, 
                 color='red', weight='bold', fontsize=9)
 
     # RMSE cirkel
@@ -81,7 +89,7 @@ def draw_plot():
 
     ax.set_aspect("equal")
     ax.grid(True, linestyle=':', alpha=0.6)
-    ax.set_title("Real-time Trilateratie Visualisatie")
+    ax.set_title("Real-time Visualisatie")
 
     # Forceer update van de GUI
     fig.canvas.draw()
