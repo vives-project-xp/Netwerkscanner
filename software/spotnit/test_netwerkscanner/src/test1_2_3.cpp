@@ -8,13 +8,13 @@
 
 #include "test1_2_3.h"
 
-
 void test1_2() // vind alle netwerken.
 {
   Serial.println("Scan start");
 
   // WiFi.scanNetworks will return the number of networks found.
-  int n = WiFi.scanNetworks(false, true, true, 80);
+  // standaard int n = WiFi.scanNetworks(false, true, true, 100);
+  int n = WiFi.scanNetworks(false, true, true, 150, 1);
   Serial.println("Scan done");
   if (n == 0)
   {
@@ -26,7 +26,7 @@ void test1_2() // vind alle netwerken.
     Serial.println(" networks found");
     Serial.println(
         "Nr | SSID                             | RSSI |  | BSSID                    | CH | Encryption");
-    for (int i = 0; i < 10; ++i)
+    for (int i = 0; i < n; ++i)
     {
       // Print SSID and RSSI for each network found
       Serial.printf("%2d", i + 1);

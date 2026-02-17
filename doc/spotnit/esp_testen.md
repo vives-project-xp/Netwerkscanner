@@ -104,3 +104,10 @@ Als we goed kijken zien we dat sommige netwerken een bijna identiek bssid hebben
 Enkel de laatste waarde veranderd. 1 acces point heeft meerdere netwerken die hij uitstuurt.  
 
 Dit is belangrijk om te weten omdat als we triangulatie willen doen dat we niet met 3 dezelfde de positie proberen te bepalen.
+
+# test 4
+
+opstelling gemaakt met 3 esp8266 acces points. 
+test van de Trilateratie geeft negatieve en foute waarden.  
+Door het ingeven van eigen waarden zie ik dat de formule werkt maar geeft negative waarden terug.
+De fouten waarden komen door de nog niet nauwkeurige afstand bepaling naar de ap's
