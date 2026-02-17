@@ -9,13 +9,11 @@ using namespace std;
 #include "debug.h"
 bool debugStatus = true;
 
-#include "test1_2_3.h"
-#include "test_trilateratie.h"
-
-
+//#include "test1_2_3.h"
+//#include "test_trilateratie.h"
+#include "trilateratie_n_points.h"
 
 //---------------------------------
-
 
 void setup()
 {
@@ -29,12 +27,13 @@ void setup()
   delay(100);
 
   Serial.println("Setup done");
-  Trilateratie();
+  test_TrilateratieLeastSquares();
 }
 
 void loop()
 {
   // test1_2();
   //   test3();
-  // Trilateratie();
+  //Trilateratie();
+  //test_TrilateratieLeastSquares();
 }
