@@ -35,5 +35,6 @@ void loop()
   // test1_2();
   //   test3();
   //Trilateratie();
-  //test_TrilateratieLeastSquares();
+  test_TrilateratieLeastSquares();
+  delay(3000);
 }
