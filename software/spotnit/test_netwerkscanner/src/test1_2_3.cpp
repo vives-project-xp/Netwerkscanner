@@ -14,7 +14,7 @@ void test1_2() // vind alle netwerken.
 
   // WiFi.scanNetworks will return the number of networks found.
   // standaard int n = WiFi.scanNetworks(false, true, true, 100);
-  int n = WiFi.scanNetworks(false, true, true, 150, 1);
+  int n = WiFi.scanNetworks(false, true, true, 100);
   Serial.println("Scan done");
   if (n == 0)
   {

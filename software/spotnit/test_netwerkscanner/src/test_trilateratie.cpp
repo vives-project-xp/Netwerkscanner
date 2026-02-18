@@ -30,7 +30,7 @@ int findAPIndex(String mac, int aantalNetwerken)
 
 float RssiToMeter(int rssi)
 {
-    const int rssiOp1Meter = -40;      // rssi waarde op 1 meter
+    const int rssiOp1Meter = -34;      // rssi waarde op 1 meter
     const int propagationConstant = 3; // hoe goed kan het signaal in de ruimte bewegen.
     return powf(10, (rssiOp1Meter - rssi) / (10.0f * propagationConstant));
 }

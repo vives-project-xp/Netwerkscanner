@@ -13,14 +13,15 @@ private:
     float y;
     float z;
     float RMSE;       // root mean squared error
-    String macPrefix; // eerste 10 hex waarden van MAC
+    String macPrefix; // eerste 10 hex waarden van MAC vb "EA:9F:6D:88:2A:71" -> "EA:9F:6D:88:2A"
     std::vector<int> RSSI;
     std::vector<String> SSID;
     std::vector<String> BSSID;
 
 public:
     // Constructor
-    AccessPoint(float xVal = 0.0f, float yVal = 0.0f, float rmse = 0.0f);
+    AccessPoint();
+    AccessPoint(float xVal, float yVal, String macPrefix = "", float RMSE = 0.0f);
 
     // Getters
     float GetX() const;

@@ -9,13 +9,8 @@
 
 #include "debug.h"
 #include "access_point.h"
+#include "trilateratie_n_points.h"
 
-struct trilaterationResult
-{
-    float x;
-    float y;
-    float RMSE;
-};
 
 void VisualTrilateratie(const std::vector<AccessPoint> &aps,
                         const std::vector<double> &distances,

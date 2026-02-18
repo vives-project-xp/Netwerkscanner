@@ -6,9 +6,14 @@
 #include "access_point.h"
 
 // Constructor
-AccessPoint::AccessPoint(float xVal, float yVal, float rmse)
-    : x(xVal), y(yVal), z(0.0f), RMSE(rmse), macPrefix("")
+AccessPoint::AccessPoint() {}
+AccessPoint::AccessPoint(float xVal, float yVal, String macPrefix, float RMSE)
 {
+    x = xVal;
+    y = yVal;
+    z = 0.0f;
+    this->macPrefix = macPrefix;
+    this->RMSE = RMSE;
 }
 
 // Getters
