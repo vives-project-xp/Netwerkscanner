@@ -94,18 +94,11 @@ trilaterationResult TrilateratieLeastSquares(const std::vector<AccessPoint> &aps
         // nu hebben we een lineaire vergelijking
 
         // w hoeveel moet dit ap meewegen groter w telt meer mee
-        double d0 = 3.0; // tot 3m = 100%
-        double w;
-
-        if (di <= d0)
-        {
-            w = 1.0;
-        }
-        else
-        {
-            // logaritmische afname
-            w = 1.0 / (1.0 + std::log10(di / d0));
-        }
+        double w = 1.0; // standaard 100%
+        if (di > 3.0)
+            w -= 0.01136 * (di - 3.0);
+        if (w < 0.0)
+            w = 0.0;
         // Accumulate A^T A
         ATA00 += w * A0 * A0;
         ATA01 += w * A0 * A1;
