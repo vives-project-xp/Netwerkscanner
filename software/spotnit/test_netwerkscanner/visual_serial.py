@@ -61,13 +61,14 @@ def draw_plot():
     # APs tekenen
     for i, (x, y) in enumerate(aps):
         ax.scatter(x, y, marker="s", c='blue', s=100)
-        ax.text(x + 0.2, y + 0.2, f"AP{i}", fontsize=9)
+        ax.text(x + 0.2, y + 0.2, f"AP{i} {distances[i]}", fontsize=9)
 
     # Cirkels van APs
     for i, d in enumerate(distances):
         if i < len(aps):
             circle = patches.Circle(aps[i], d, fill=False, linestyle="--", edgecolor="gray", alpha=0.5)
             ax.add_patch(circle)
+            
 
     # Device tekenen
     if deviceX is not None and deviceY is not None:
