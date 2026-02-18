@@ -111,3 +111,18 @@ opstelling gemaakt met 3 esp8266 acces points.
 test van de Trilateratie geeft negatieve en foute waarden.  
 Door het ingeven van eigen waarden zie ik dat de formule werkt maar geeft negative waarden terug.
 De fouten waarden komen door de nog niet nauwkeurige afstand bepaling naar de ap's
+
+# test 5 
+esp hebben nu allemaal goede antennes, rssi waarden zijn nu gelijkaardig als ze op dezelfde plaats staan.  
+
+# test 6 
+positie bepaling werkt ongeveer, ap3 heeft een object in de weg waardoor hij denk verder te zijn waardoor de geschatte positie word weg geduwd in die richting. ![alt text](image.png) 
+
+
+# test 7
+ap verplaatst en obstakels zo veel mogelijk verminderd. mijn locatie is X=2 Y=2
+![alt text](image-1.png)
+
+# test 8 
+Met 4 ap gaat het al beter maar er moet nog aangepast worden dat korte afstanden meer doorwegen dan de lange. Naar mijn aanvoelen kan je de positie schatten in een straal van 5m van de echte locatie. personen in de ruimte verstoren ook de metingen. verschil meten met de ftm zal dat mogelijk verbeteren.
+![alt text](image-2.png)
