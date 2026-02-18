@@ -96,7 +96,7 @@ trilaterationResult TrilateratieLeastSquares(const std::vector<AccessPoint> &aps
         // w hoeveel moet dit ap meewegen groter w telt meer mee
         double w = 1.0; // standaard 100%
         if (di > 3.0)
-            w -= 0.01136 * (di - 3.0);
+            w -= 0.1 * (di - 3.0);
         if (w < 0.0)
             w = 0.0;
         // Accumulate A^T A
