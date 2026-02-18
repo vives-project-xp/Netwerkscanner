@@ -55,8 +55,11 @@ void ScanNetworks()
   std::vector<double> distances = {};
   for (int i = 0; i < aps.size(); i++)
   {
-
-    distances.push_back(RssiToMeter(aps[i].GetAverageRssi()));
+    float averageRssi = aps[i].GetAverageRssi();
+    if (averageRssi != -1)
+    {
+      distances.push_back(RssiToMeter(averageRssi));
+    }
   }
 
   AccessPoint device;

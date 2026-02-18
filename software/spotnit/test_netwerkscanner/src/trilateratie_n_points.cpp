@@ -11,7 +11,6 @@
 #include "access_point.h"
 #include "trilateratie_n_points.h"
 
-
 void VisualTrilateratie(const std::vector<AccessPoint> &aps,
                         const std::vector<double> &distances,
                         float deviceX, float deviceY, float RMSE)
@@ -82,12 +81,17 @@ trilaterationResult TrilateratieLeastSquares(const std::vector<AccessPoint> &aps
         double yi = aps[i].GetY();
         double di = distances[i];
 
+        // vergelijking cirkel
+        // Probleem: er zit 𝑥² en 𝑦² in → niet lineair.
+
         // Row of A
         double A0 = 2.0 * (xi - x1);
         double A1 = 2.0 * (yi - y1);
 
-        // Right-hand side b
+        // Neem cirkel i min cirkel 1: [ ( 𝑥 − 𝑥𝑖 )² + ( 𝑦 − 𝑦𝑖 )² ] − [ ( 𝑥 − 𝑥1 )² + ( 𝑦 − 𝑦1 )² ] = 𝑑𝑖²  − 𝑑²1
+        //  Right-hand side b
         double bi = (d1 * d1 - di * di) - (x1 * x1 - xi * xi) - (y1 * y1 - yi * yi);
+        //nu hebben we een lineaire vergelijking
 
         // Accumulate A^T A
         ATA00 += A0 * A0;
@@ -97,6 +101,10 @@ trilaterationResult TrilateratieLeastSquares(const std::vector<AccessPoint> &aps
         // Accumulate A^T b
         ATb0 += A0 * bi;
         ATb1 += A1 * bi;
+        //we hebben meer vergelijkingen dan onbekenden
+        //matrix
+        //[ATA00 ​ATA01​​][x]=[ATb0]
+        //[ATA01 ​ATA11​​][y​]=[​ATb1​​]
     }
 
     double x, y;
@@ -136,9 +144,8 @@ void test_TrilateratieLeastSquares()
                                     {5, 15},
                                     {0, 0}};
 
-    
     std::vector<double> distances = {
-        7, 
+        7,
         7,
         7,
         10,

@@ -86,7 +86,7 @@ float AccessPoint::GetAverageRssi() const
     if (vectorSize == 0)
     {
         debugln("vector rssi was leeg");
-        return 0.0f;
+        return -1;
     }
 
     int sum = 0;
