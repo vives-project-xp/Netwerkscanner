@@ -33,9 +33,9 @@ void ScanNetworks()
 {
   // maak aps
   std::vector<AccessPoint> aps = {
-      {0.5, 4, "EA:9F:6D:88:2A"},
+      {0.5, 4.5, "EA:9F:6D:88:2A"},
       {0, 0, "EA:9F:6D:88:25"},
-      {5, -6, "EA:9F:6D:88:F5"},
+      {5, -6.5, "EA:9F:6D:88:F5"},
       {4, 4, "56:29:C0:8E:47"}};
 
   unsigned long vorigeMillis = millis();
