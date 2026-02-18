@@ -91,18 +91,31 @@ trilaterationResult TrilateratieLeastSquares(const std::vector<AccessPoint> &aps
         // Neem cirkel i min cirkel 1: [ ( 𝑥 − 𝑥𝑖 )² + ( 𝑦 − 𝑦𝑖 )² ] − [ ( 𝑥 − 𝑥1 )² + ( 𝑦 − 𝑦1 )² ] = 𝑑𝑖²  − 𝑑²1
         //  Right-hand side b
         double bi = (d1 * d1 - di * di) - (x1 * x1 - xi * xi) - (y1 * y1 - yi * yi);
-        //nu hebben we een lineaire vergelijking
+        // nu hebben we een lineaire vergelijking
 
+        // w hoeveel moet dit ap meewegen groter w telt meer mee
+        double d0 = 3.0; // tot 3m = 100%
+        double w;
+
+        if (di <= d0)
+        {
+            w = 1.0;
+        }
+        else
+        {
+            // logaritmische afname
+            w = 1.0 / (1.0 + std::log10(di / d0));
+        }
         // Accumulate A^T A
-        ATA00 += A0 * A0;
-        ATA01 += A0 * A1;
-        ATA11 += A1 * A1;
+        ATA00 += w * A0 * A0;
+        ATA01 += w * A0 * A1;
+        ATA11 += w * A1 * A1;
 
         // Accumulate A^T b
-        ATb0 += A0 * bi;
-        ATb1 += A1 * bi;
-        //we hebben meer vergelijkingen dan onbekenden
-        //matrix
+        ATb0 += w * A0 * bi;
+        ATb1 += w * A1 * bi;
+        // we hebben meer vergelijkingen dan onbekenden
+        // matrix
         //[ATA00 ​ATA01​​][x]=[ATb0]
         //[ATA01 ​ATA11​​][y​]=[​ATb1​​]
     }
