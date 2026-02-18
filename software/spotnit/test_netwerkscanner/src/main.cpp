@@ -59,6 +59,8 @@ void ScanNetworks()
     if (averageRssi != -1)
     {
       distances.push_back(RssiToMeter(averageRssi));
+    }else{
+      aps.erase(aps.begin() + i);
     }
   }
 
