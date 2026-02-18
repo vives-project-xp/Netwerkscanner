@@ -126,3 +126,7 @@ ap verplaatst en obstakels zo veel mogelijk verminderd. mijn locatie is X=2 Y=2
 # test 8 
 Met 4 ap gaat het al beter maar er moet nog aangepast worden dat korte afstanden meer doorwegen dan de lange. Naar mijn aanvoelen kan je de positie schatten in een straal van 5m van de echte locatie. personen in de ruimte verstoren ook de metingen. verschil meten met de ftm zal dat mogelijk verbeteren.
 ![alt text](image-2.png)
+
+# idee
+de pcb antennen ontvangt niet uniform in alle richtingen.  
+wat als we nu de esp nu rap laten ronddraaien zodat het een gemiddelde word.
