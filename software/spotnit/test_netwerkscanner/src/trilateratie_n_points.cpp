@@ -94,19 +94,15 @@ trilaterationResult TrilateratieLeastSquares(const std::vector<AccessPoint> &aps
         // nu hebben we een lineaire vergelijking
 
         // w hoeveel moet dit ap meewegen groter w telt meer mee
-        double w = 1.0; // standaard 100%
-        if (di > 3.0)
-            w -= 0.1 * (di - 3.0);
-        if (w < 0.0)
-            w = 0.0;
+
         // Accumulate A^T A
-        ATA00 += w * A0 * A0;
-        ATA01 += w * A0 * A1;
-        ATA11 += w * A1 * A1;
+        ATA00 +=A0 * A0;
+        ATA01 +=A0 * A1;
+        ATA11 +=A1 * A1;
 
         // Accumulate A^T b
-        ATb0 += w * A0 * bi;
-        ATb1 += w * A1 * bi;
+        ATb0 +=A0 * bi;
+        ATb1 +=A1 * bi;
         // we hebben meer vergelijkingen dan onbekenden
         // matrix
         //[ATA00 ​ATA01​​][x]=[ATb0]
