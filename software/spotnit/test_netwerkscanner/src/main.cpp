@@ -12,6 +12,7 @@ bool debugStatus = true;
 #include "test1_2_3.h"
 #include "test_trilateratie.h"
 #include "trilateratie_n_points.h"
+#include "non_linear_least_squares.h"
 
 void UpdateRSSI(std::vector<AccessPoint> &aps, int aantalNetwerken)
 {
@@ -37,7 +38,7 @@ void ScanNetworks()
       {0, 0, "EA:9F:6D:88:25"},
       {5, -6.5, "EA:9F:6D:88:F5"},
       //{4, 4, "56:29:C0:8E:47"}
-    };
+  };
 
   unsigned long vorigeMillis = millis();
   while (millis() - vorigeMillis < 5000) // blijf scannen voor 5 seconden
@@ -60,16 +61,18 @@ void ScanNetworks()
     if (averageRssi != -1)
     {
       distances.push_back(RssiToMeter(averageRssi));
-
-    }else{
+    }
+    else
+    {
       aps.erase(aps.begin() + i);
     }
   }
 
   AccessPoint device;
-  trilaterationResult resultaat = TrilateratieLeastSquares(aps, distances);
-  device.SetPos(resultaat.x, resultaat.y);
-  device.SetRMSE(resultaat.RMSE);
+   trilaterationResult resultaat = TrilateratieLeastSquares(aps, distances);
+  test_non_linear_least_squares(aps, distances);
+  // device.SetPos(resultaat.x, resultaat.y);
+  // device.SetRMSE(resultaat.RMSE);
   debugln("test_TrilateratieLeastSquares");
   debugln("positie = " + String(device.GetX()) + " " + String(device.GetY()));
   debugln("RMSE " + String(device.GetRMSE()));
