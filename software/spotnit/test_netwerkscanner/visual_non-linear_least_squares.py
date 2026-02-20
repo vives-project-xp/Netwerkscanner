@@ -1,89 +1,151 @@
+import serial
+import serial.tools.list_ports
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-import numpy as np
-import re
+import time
+import math
+from matplotlib.widgets import Button
 
-def teken_geavanceerde_visualisatie():
-    print("Plak de volledige output van je programma (inclusief de Punten):")
-    
-    input_lines = []
-    while True:
-        line = input()
-        if not line.strip(): break # Stopt bij een lege regel
-        input_lines.append(line)
-        if "Hoek (graden):" in line:
-            # We lezen nog even door voor de punten als die er direct onder staan
-            continue 
-        # Als er na de hoek nog punten komen, lezen we die ook. 
-        # In dit script stoppen we als de gebruiker een extra Enter geeft.
+BAUDRATE = 112500
+UPDATE_INTERVAL = 0.1
 
-    input_text = "\n".join(input_lines)
+# Zoek COM-poort
+ports = list(serial.tools.list_ports.comports())
+if not ports:
+    print("Geen COM-poorten gevonden!")
+    exit()
 
-    try:
-        # Basis data extraheren
-        x_est = float(re.search(r"locatie: \(([-\d.]+), ([-\d.]+)\)", input_text).group(1))
-        y_est = float(re.search(r"locatie: \(([-\d.]+), ([-\d.]+)\)", input_text).group(2))
-        major = float(re.search(r"Hoofdas \(lengte\): ([-\d.]+)", input_text).group(1))
-        minor = float(re.search(r"Nevenas \(breedte\): ([-\d.]+)", input_text).group(1))
-        angle = float(re.search(r"Hoek \(graden\):\s+([-\d.]+)", input_text).group(1))
+port = ports[0].device
+print(f"Gebruik COM-poort: {port}")
 
-        # Punten extraheren: "Punt: 0,0 -> Afstand: 7.1"
-        punten = re.findall(r"Punt:\s+([-\d.]+),([-\d.]+)\s+->\s+Afstand:\s+([-\d.]+)", input_text)
-    except AttributeError:
-        print("\nFout: Kon de gegevens niet goed lezen. Controleer het formaat.")
-        return
+ser = serial.Serial(port, BAUDRATE, timeout=0.01)
 
-    fig, ax = plt.subplots(figsize=(12, 10))
+# Data containers
+aps = []
+distances = []
 
-    # 1. Teken de Access Points en hun gemeten afstanden (cirkels)
-    for i, (px, py, dist) in enumerate(punten):
-        px, py, dist = float(px), float(py), float(dist)
-        # Het fysieke punt
-        ax.scatter(px, py, color='black', marker='s', s=80)
-        ax.text(px, py + 0.5, f"AP{i+1}", fontsize=10, ha='center')
-        # De afstandscirkel (geeft aan waar het punt zou moeten liggen volgens dit AP)
-        cirkel = plt.Circle((px, py), dist, color='blue', fill=False, linestyle=':', alpha=0.3)
-        ax.add_patch(cirkel)
+deviceX = None
+deviceY = None
+hoofdas = None
+nevenas = None
+hoek = None
 
-    # 2. Teken de Betrouwbaarheidsovaal
-    # Matplotlib gebruikt breedte/hoogte (2x de as-lengte)
-    ellips = patches.Ellipse(
-        (x_est, y_est), width=major*2, height=minor*2, angle=angle,
-        edgecolor='red', facecolor='red', alpha=0.15, linewidth=2, label='95% Betrouwbaarheid'
-    )
-    ax.add_patch(ellips)
-    
-    # Rand van de ellips
-    rand = patches.Ellipse(
-        (x_est, y_est), width=major*2, height=minor*2, angle=angle,
-        edgecolor='red', facecolor='none', linewidth=2, linestyle='--'
-    )
-    ax.add_patch(rand)
+paused = False
 
-    # 3. De geschatte locatie
-    ax.scatter(x_est, y_est, color='green', marker='X', s=150, label=f'Schatting ({x_est:.2f}, {y_est:.2f})', zorder=5)
+plt.ion()
+fig, ax = plt.subplots(figsize=(7, 5))
+plt.subplots_adjust(bottom=0.2)
 
-    # Layout instellingen
-    ax.set_aspect('equal')
-    
-    # Bepaal grenzen op basis van alle data (punten + ellips)
-    all_x = [float(p[0]) for p in punten] + [x_est]
-    all_y = [float(p[1]) for p in punten] + [y_est]
-    
-    # Zoom een beetje uit om de ellips te laten passen, maar niet té ver als de ellips 71m is
-    limit_margin = max(minor * 4, 15) 
-    ax.set_xlim(min(all_x) - limit_margin, max(all_x) + limit_margin)
-    ax.set_ylim(min(all_y) - limit_margin, max(all_y) + limit_margin)
+def toggle_pause(event):
+    global paused
+    paused = not paused
+    pause_button.label.set_text("Continue" if paused else "Pause")
 
-    ax.grid(True, which='both', linestyle='--', alpha=0.5)
-    ax.axhline(0, color='black', linewidth=0.5)
-    ax.axvline(0, color='black', linewidth=0.5)
-    
-    ax.set_title("Trilateratie: Locatie Punten & Onzekerheidsveld", fontsize=14)
-    ax.legend(loc='upper right')
+ax_pause = plt.axes([0.4, 0.05, 0.2, 0.075])
+pause_button = Button(ax_pause, "Pause")
+pause_button.on_clicked(toggle_pause)
 
-    print("\nGrafiek gegenereerd.")
-    plt.show()
+def draw_plot():
+    ax.clear()
 
-if __name__ == "__main__":
-    teken_geavanceerde_visualisatie()
+    # AP's tekenen
+    for i, (x, y) in enumerate(aps):
+        ax.scatter(x, y, marker="s", s=100)
+        if i < len(distances):
+            ax.text(x + 0.2, y + 0.2, f"AP{i} {distances[i]:.2f}", fontsize=9)
+
+    # Afstandscirkels
+    for i, d in enumerate(distances):
+        if i < len(aps):
+            circle = patches.Circle(aps[i], d, fill=False, linestyle="--", alpha=0.4)
+            ax.add_patch(circle)
+
+    # Device tekenen
+    if deviceX is not None and deviceY is not None:
+        ax.scatter(deviceX, deviceY, marker="x", s=200, linewidth=3)
+        ax.text(deviceX + 0.2, deviceY + 0.2,
+                f"Device\nX={deviceX:.2f}, Y={deviceY:.2f}",
+                fontsize=9)
+
+    # 95% Ovaal tekenen
+    if (deviceX is not None and deviceY is not None and
+        hoofdas is not None and nevenas is not None and hoek is not None):
+
+        ellipse = patches.Ellipse(
+            (deviceX, deviceY),
+            width=2 * nevenas,
+            height=2 * hoofdas,
+            angle=hoek * 180.0 / math.pi,
+            fill=False,
+            linestyle="--"
+        )
+        ax.add_patch(ellipse)
+
+    ax.set_aspect("equal")
+    ax.grid(True, linestyle=":")
+    ax.set_title("95% Betrouwbaarheidsvisualisatie")
+
+    fig.canvas.draw()
+    fig.canvas.flush_events()
+
+print("Luisteren naar Serial...")
+
+last_update = time.time()
+
+try:
+    while plt.fignum_exists(fig.number):
+
+        while ser.in_waiting > 0:
+            line = ser.readline().decode("utf-8", errors="ignore").strip()
+            if not line:
+                continue
+
+            # Nieuwe dataset start
+            if "--- 95% Betrouwbaarheidsovaal ---" in line:
+                aps = []
+                distances = []
+
+            # Device locatie
+            elif "Geschatte locatie:" in line:
+                coords = line.split("(")[1].split(")")[0]
+                x_str, y_str = coords.split(",")
+                deviceX = float(x_str)
+                deviceY = float(y_str)
+
+            # Hoofdas
+            elif "Hoofdas (lengte):" in line:
+                hoofdas = float(line.split(":")[1].strip())
+
+            # Nevenas
+            elif "Nevenas (breedte):" in line:
+                nevenas = float(line.split(":")[1].strip())
+
+            # Hoek radialen
+            elif "Hoek (radialen):" in line:
+                value_str = line.split(":")[1].replace("rad", "").strip()
+                hoek = float(value_str)
+
+            # Punt + Afstand
+            elif "Punt:" in line:
+                part = line.split("Punt:")[1].strip()
+                coords_part, dist_part = part.split("->")
+                x_str, y_str = coords_part.strip().split(",")
+                d = float(dist_part.split(":")[1])
+
+                aps.append((float(x_str), float(y_str)))
+                distances.append(d)
+
+        fig.canvas.flush_events()
+
+        if not paused and (time.time() - last_update) > UPDATE_INTERVAL:
+            draw_plot()
+            last_update = time.time()
+
+        time.sleep(0.01)
+
+except KeyboardInterrupt:
+    print("Gestopt.")
+
+finally:
+    ser.close()
+    print("Serial verbinding verbroken.")

@@ -130,3 +130,7 @@ Met 4 ap gaat het al beter maar er moet nog aangepast worden dat korte afstanden
 # idee
 de pcb antennen ontvangt niet uniform in alle richtingen.  
 wat als we nu de esp nu rap laten ronddraaien zodat het een gemiddelde word.
+
+# test 9
+De nieuwe positie berekening manier werkt stukken beter dan de vorige maar nog niet perfect. moest de antenne minder directioneel zijn vermoed ik dat het beter zou zijn.
+![alt text](image-3.png)
