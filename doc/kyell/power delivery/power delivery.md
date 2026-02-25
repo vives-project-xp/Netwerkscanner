@@ -31,8 +31,11 @@ flowchart TB
 
 [adafruit lithium 3.7V 6600mAh](https://opencircuit.be/product/lithium-ion-battery-pack-3.7v-6600mah)
 
+[18650 lithium 3.7V 3500 mAh conrad](https://www.conrad.be/nl/p/ansmann-18650-12-60-wh-speciale-oplaadbare-batterij-18650-li-ion-3-7-v-3500-mah-1-stuk-s-1682008.html)
+
 [ESP32-C5 Dev Board USB-C mouser 4 weken lead time](https://www.mouser.be/ProductDetail/Espressif-Systems/ESP32-C5-DevKitC-1-N8R8?qs=6avfeC6zeS67aD1hu9NHBw%3D%3D)
 
 [ESP32-C5 Dev Board USB-C digi-key 19 weken?? lead time](https://www.digikey.be/en/products/detail/espressif-systems/ESP32-C5-DEVKITC-1-N8R8/28718162?s=N4IgTCBcDaIKIGUAKBmMBaAwgVnQEQFMA3AaQEsAXTdARnQDkAOAJUZAF0BfIA)
 
 [batt houder 18650](https://opencircuit.be/product/battery-holder-1x18650-wire-leads)
+
