@@ -13,6 +13,7 @@ bool debugStatus = true;
 #include "test_trilateratie.h"
 #include "trilateratie_n_points.h"
 #include "non_linear_least_squares.h"
+#include "simple_fingerprinting.h"
 
 void UpdateRSSI(std::vector<AccessPoint> &aps, int aantalNetwerken)
 {
@@ -94,10 +95,11 @@ void setup()
 
 void loop()
 {
-  test1_2();
+  //test1_2();
   //    test3();
   //  Trilateratie();
   //  TrilateratieLeastSquares();
   //  test_TrilateratieLeastSquares();
-  ScanNetworks();
+  //ScanNetworks();
+  test_simple_fingerprinting();
 }
