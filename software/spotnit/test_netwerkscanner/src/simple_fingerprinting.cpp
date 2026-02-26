@@ -48,16 +48,15 @@ public:
 
 String Serial_ask(String question = "") // leest tot '\n' karakter
 {
-    while (Serial.available())// leeg buffer
-    {
-        Serial.read();
-    }
+
     Serial.println(question);
+    while (Serial.read() != -1)
+        ; // leeg buffer
 
     while (Serial.available() == 0)
     { // wait for data available
     }
-    String line = Serial.readString();
+    String line = Serial.readStringUntil('\n');
     line.trim();
     Serial.println(line);
 
@@ -68,6 +67,11 @@ std::vector<DataPoint> datapoints;
 void Scan()
 {
     DataPoint datapoint;
+
+    int x = Serial_ask("Enter X cor").toInt();
+    int y = Serial_ask("Enter Y cor").toInt();
+    datapoint.setPoint(x, y);
+
     int aantalNetwerken = 0;
     aantalNetwerken = WiFi.scanNetworks(false, true, true, 150);
     if (aantalNetwerken <= 0)
@@ -75,10 +79,6 @@ void Scan()
         return;
     }
 
-    int x = Serial_ask("Enter X cor").toInt();
-    int y = Serial_ask("Enter Y cor").toInt();
-
-    datapoint.setPoint(x, y);
     for (int i = 0; i < aantalNetwerken; i++)
     {
         datapoint.addMeasurement(WiFi.RSSI(i), WiFi.BSSIDstr(i));
@@ -94,6 +94,7 @@ void printData()
         Serial.println("meetpunt" + String(i));
         Serial.println("X = " + String(datapoints[i].getX()));
         Serial.println("Y = " + String(datapoints[i].getY()));
+        Serial.println(datapoints[i].getMeasurementCount());
         for (int j = 0; j < datapoints[i].getMeasurementCount(); j++)
         {
             Serial.println(String(datapoints[i].getRssi(j)) + " - " + String(datapoints[i].getMac(j)));
