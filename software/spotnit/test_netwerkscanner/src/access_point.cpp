@@ -5,6 +5,15 @@
 #include "debug.h"
 #include "access_point.h"
 
+
+float x;
+float y;
+float z;
+float RMSE; // root mean squared error
+String macPrefix;
+std::vector<int> RSSI;
+std::vector<String> SSID;
+std::vector<String> BSSID;
 // Constructor
 AccessPoint::AccessPoint() {}
 AccessPoint::AccessPoint(float xVal, float yVal, String macPrefix, float RMSE)
