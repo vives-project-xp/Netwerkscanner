@@ -42,6 +42,7 @@ public:
 
     // Functies
     float GetAverageRssi() const;
+    float RssiToMeter(float rssi) const;
     void ResetVectors();
 };
 
