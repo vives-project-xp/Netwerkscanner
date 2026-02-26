@@ -107,7 +107,7 @@ Dit is belangrijk om te weten omdat als we triangulatie willen doen dat we niet 
 
 # test 4
 
-opstelling gemaakt met 3 esp8266 acces points. 
+opstelling gemaakt met 3 esp8266 acces points.
 test van de Trilateratie geeft negatieve en foute waarden.  
 Door het ingeven van eigen waarden zie ik dat de formule werkt maar geeft negative waarden terug.
 De fouten waarden komen door de nog niet nauwkeurige afstand bepaling naar de ap's
@@ -117,7 +117,6 @@ esp hebben nu allemaal goede antennes, rssi waarden zijn nu gelijkaardig als ze 
 
 # test 6 
 positie bepaling werkt ongeveer, ap3 heeft een object in de weg waardoor hij denk verder te zijn waardoor de geschatte positie word weg geduwd in die richting. ![alt text](image.png) 
-
 
 # test 7
 ap verplaatst en obstakels zo veel mogelijk verminderd. mijn locatie is X=2 Y=2
