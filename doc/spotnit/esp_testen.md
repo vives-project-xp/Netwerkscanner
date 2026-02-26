@@ -134,3 +134,7 @@ wat als we nu de esp nu rap laten ronddraaien zodat het een gemiddelde word.
 # test 9
 De nieuwe positie berekening manier werkt stukken beter dan de vorige maar nog niet perfect. moest de antenne minder directioneel zijn vermoed ik dat het beter zou zijn.
 ![alt text](image-3.png)
+
+# test 10
+Op school zelfde resultaat als thuis niet zo nauwkeurig
+![alt text](image-4.png)  
