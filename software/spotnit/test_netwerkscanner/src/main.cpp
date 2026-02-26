@@ -34,9 +34,9 @@ void ScanNetworks()
 {
   // maak aps
   std::vector<AccessPoint> aps = {
-      {4, 8, "EA:9F:6D:88:2A"},
+      {6, 0, "EA:9F:6D:88:2A"},
       {0, 0, "EA:9F:6D:88:25"},
-      {5, -6.5, "EA:9F:6D:88:F5"},
+      {0, -7, "EA:9F:6D:88:F5"},
       //{4, 4, "56:29:C0:8E:47"}
   };
 
@@ -60,7 +60,7 @@ void ScanNetworks()
     float averageRssi = aps[i].GetAverageRssi();
     if (averageRssi != -1)
     {
-      distances.push_back(RssiToMeter(averageRssi));
+      distances.push_back(aps[i].RssiToMeter(averageRssi));
     }
     else
     {

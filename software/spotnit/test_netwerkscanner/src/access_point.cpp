@@ -97,6 +97,13 @@ float AccessPoint::GetAverageRssi() const
     return (float)sum / vectorSize;
 }
 
+float AccessPoint::RssiToMeter(float rssi) const
+{
+    const int rssiOp1Meter = -34;          // rssi waarde op 1 meter
+    const float propagationConstant = 3.2; // hoe goed kan het signaal in de ruimte bewegen.//[2-4]
+    return powf(10, (rssiOp1Meter - rssi) / (10.0f * propagationConstant));
+}
+
 void AccessPoint::ResetVectors()
 {
     RSSI.clear();
