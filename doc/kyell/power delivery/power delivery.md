@@ -38,4 +38,3 @@ flowchart TB
 [ESP32-C5 Dev Board USB-C digi-key 19 weken?? lead time](https://www.digikey.be/en/products/detail/espressif-systems/ESP32-C5-DEVKITC-1-N8R8/28718162?s=N4IgTCBcDaIKIGUAKBmMBaAwgVnQEQFMA3AaQEsAXTdARnQDkAOAJUZAF0BfIA)
 
 [batt houder 18650](https://opencircuit.be/product/battery-holder-1x18650-wire-leads)
-
