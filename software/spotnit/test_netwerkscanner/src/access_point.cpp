@@ -5,6 +5,15 @@
 #include "debug.h"
 #include "access_point.h"
 
+
+float x;
+float y;
+float z;
+float RMSE; // root mean squared error
+String macPrefix;
+std::vector<int> RSSI;
+std::vector<String> SSID;
+std::vector<String> BSSID;
 // Constructor
 AccessPoint::AccessPoint() {}
 AccessPoint::AccessPoint(float xVal, float yVal, String macPrefix, float RMSE)
@@ -95,6 +104,13 @@ float AccessPoint::GetAverageRssi() const
         sum += val;
     }
     return (float)sum / vectorSize;
+}
+
+float AccessPoint::RssiToMeter(float rssi) const
+{
+    const int rssiOp1Meter = -34;          // rssi waarde op 1 meter
+    const float propagationConstant = 3.2; // hoe goed kan het signaal in de ruimte bewegen.//[2-4]
+    return powf(10, (rssiOp1Meter - rssi) / (10.0f * propagationConstant));
 }
 
 void AccessPoint::ResetVectors()

@@ -97,7 +97,7 @@ void test3() // snelheid test
   timeStart = millis();
   for (int i = 0; i < scans; i++)
   {
-    WiFi.scanNetworks(false, true, false, 100); // online repo kiest ook 80ms per channel
+    WiFi.scanNetworks(false, true, false, 80); // online repo kiest ook 80ms per channel
   }
   timeStop = millis();
   Serial.println("gemiddelde voor 1 scan = " + String((timeStop - timeStart) / scans));
