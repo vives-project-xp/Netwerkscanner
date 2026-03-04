@@ -83,7 +83,7 @@ def draw_plot():
 
     ax.set_aspect("equal")
     ax.grid(True, linestyle=":")
-    ax.set_title("95% Betrouwbaarheidsvisualisatie")
+    ax.set_title("Metingen")
 
     fig.canvas.draw()
     fig.canvas.flush_events()
