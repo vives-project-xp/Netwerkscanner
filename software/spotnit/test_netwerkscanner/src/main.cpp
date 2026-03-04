@@ -70,7 +70,7 @@ void ScanNetworks()
   }
 
   AccessPoint device;
-   trilaterationResult resultaat = TrilateratieLeastSquares(aps, distances);
+  trilaterationResult resultaat = TrilateratieLeastSquares(aps, distances);
   test_non_linear_least_squares(aps, distances);
   // device.SetPos(resultaat.x, resultaat.y);
   // device.SetRMSE(resultaat.RMSE);
@@ -81,6 +81,7 @@ void ScanNetworks()
 
 void setup()
 {
+  std::vector<int> v = {10, 20, 30, 40};
   Serial.begin(115200);
 
   // Set WiFi to station mode and disconnect from an AP if it was previously
@@ -91,15 +92,16 @@ void setup()
   delay(100);
 
   Serial.println("Setup done");
+  Serial.println("hello world");
 }
 
 void loop()
 {
-  //test1_2();
-  //    test3();
-  //  Trilateratie();
-  //  TrilateratieLeastSquares();
-  //  test_TrilateratieLeastSquares();
-  //ScanNetworks();
+  // test1_2();
+  //     test3();
+  //   Trilateratie();
+  //   TrilateratieLeastSquares();
+  //   test_TrilateratieLeastSquares();
+  // ScanNetworks();
   test_simple_fingerprinting();
 }
