@@ -1,9 +1,64 @@
+# WiFi Research
+
+## WiFi Modes
+
+| Mode           | Beschrijving                                 |
+|----------------|----------------------------------------------|
+| `Station`      | Verbindt met een bestaand WiFi netwerk       |
+| `Access Point` | Maakt een eigen WiFi netwerk aan             |
+| `Station + AP` | Kan beide tegelijk                            |
+
+## Veelgebruikte WiFi Commando's (ESP)
+
+```cpp
+WiFi.begin(ssid, password);        // Verbindt met netwerk
+WiFi.softAP(ssid, password);       // Start access point
+WiFi.status();                     // Controleert status
+WiFi.disconnect();                 // Verbreekt verbinding
+```
+
+## WiFi Security Types
+
+| Type      | Omschrijving          |
+|-----------|----------------------|
+| `WEP`     | Verouderd, onveilig   |
+| `WPA`     | Verbeterd, matig      |
+| `WPA2`    | Modern, veilig        |
+| `WPA3`    | Nieuwste, zeer veilig |
+
+## Veelvoorkomende Problemen
+
+| Probleem                 | Mogelijke Oplossing               |
+|---------------------------|----------------------------------|
+| Kan niet verbinden        | Controleer SSID en wachtwoord    |
+| Slechte signaalsterkte    | Verplaats dichter bij router/AP  |
+| IP-adres niet verkregen   | Controleer DHCP instellingen     |
+
+## WiFi Scan Voorbeeld (ESP)
+
+```cpp
+int n = WiFi.scanNetworks();
+for (int i = 0; i < n; ++i) {
+  Serial.print(WiFi.SSID(i));
+  Serial.print(" (");
+  Serial.print(WiFi.RSSI(i));
+  Serial.println(" dBm)");
+}
+```
+
+## Handige Links
+
+- [ESP32 WiFi Library](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/network/esp_wifi.html)
+- [Arduino WiFi Library](https://www.arduino.cc/en/Reference/WiFi)
+
+---
+
 # 1. Inleiding
 
 ## 1.1 Doelstelling
 
 Het doel van dit onderzoek is het analyseren van WiFi volgens de IEEE 802.11-standaard.  
-De focus ligt op de werking op fysisch niveau (Layer 1) en MAC-niveau (Layer 2), inclusief netwerkdetectie, authenticatie, datatransmissie en foutcontrole.
+Focus ligt op **fysische laag (PHY) en MAC-laag**, inclusief netwerkdetectie, authenticatie, datatransmissie en foutcontrole.
 
 ## 1.2 Onderzoeksvragen
 
@@ -14,56 +69,6 @@ De focus ligt op de werking op fysisch niveau (Layer 1) en MAC-niveau (Layer 2),
 - Hoe wordt betrouwbaarheid verzekerd?
 
 ```mermaid
-flowchart TD
-
-A[WiFi Netwerk] --> B[IEEE 802.11 Standaard]
-
-B --> C[Fysische Laag PHY]
-B --> D[MAC Laag]
-
-%% PHY
-C --> C1[Frequentiebanden]
-C1 --> C11[2.4 GHz]
-C1 --> C12[5 GHz]
-C1 --> C13[6 GHz]
-
-C --> C2[Modulatie]
-C2 --> C21[OFDM]
-C2 --> C22[QAM]
-
-C --> C3[Bitrate]
-C3 --> C31[Symbol Rate]
-C3 --> C32[Bits per Symbool]
-
-%% MAC
-D --> D1[Scanning]
-D1 --> D11[Passive Scan]
-D1 --> D12[Active Scan]
-
-D --> D2[Authenticatie]
-D2 --> D21[Open System]
-D2 --> D22[WPA2 / WPA3]
-
-D --> D3[Associatie]
-D3 --> D31[Association Request]
-D3 --> D32[Association Response]
-
-D --> D4[Datatransmissie]
-D4 --> D41[CSMA/CA]
-D4 --> D42[Backoff Mechanisme]
-D4 --> D43[ACK Bevestiging]
-
-D --> D5[Frame Types]
-D5 --> D51[Management Frames]
-D5 --> D52[Control Frames]
-D5 --> D53[Data Frames]
-
-D --> D6[Foutdetectie]
-D6 --> D61[CRC Controle]
-D6 --> D62[Hertransmissie]
-```
-
-``` mermaid
 sequenceDiagram
     participant Client
     participant AccessPoint
@@ -94,225 +99,243 @@ sequenceDiagram
 
 ## 2.1 IEEE 802.11
 
-WiFi is gebaseerd op de IEEE 802.11-standaard en opereert op:
+WiFi is gebaseerd op IEEE 802.11 en opereert op:
 
-- OSI Layer 1: Physical Layer (PHY)
-- OSI Layer 2: Medium Access Control (MAC)
+- **OSI Layer 1**: Physical Layer (PHY)  
+- **OSI Layer 2**: Medium Access Control (MAC)  
 
 Kenmerken:
+
 - Half-duplex communicatie
 - Gedeeld transmissiemedium
 - Collision Avoidance mechanisme
 
----
+| Naam   | Uitleg                                            |
+| ------ | ------------------------------------------------- |
+| `IEEE` | Institute of Electrical and Electronics Engineers |
+| `802`  | Werkgroep voor netwerken                          |
+| `.11`  | Standaard voor draadloze netwerken                |
 
-# 3. Fysische Laag (PHY)
+### Versies van 802.11
 
-## 3.1 Frequentiebanden
-
-WiFi werkt in meerdere frequentiebanden:
-
-- 2.4 GHz
-- 5 GHz
-- 6 GHz (WiFi 6E)
-
-De golflengte wordt bepaald door:
-
-λ = c / f  
-
-waar:
-- λ = golflengte (m)
-- c = lichtsnelheid (3 × 10^8 m/s)
-- f = frequentie (Hz)
+| Standaard | Jaar  | Frequentieband | Max. Snelheid |
+| :-------: | :---: | :------------: | :-----------: |
+|  802.11b  | 1999  |    2.4 GHz     |    11 Mbps    |
+|  802.11a  | 1999  |     5 GHz      |    54 Mbps    |
+|  802.11g  | 2003  |    2.4 GHz     |    54 Mbps    |
+|  802.11n  | 2009  |   2.4/5 GHz    |   600 Mbps    |
+| 802.11ac  | 2013  |     5 GHz      |   1.3 Gbps    |
+| 802.11ax  | 2019  |  2.4/5/6 GHz   |   9.6 Gbps    |
 
 ---
 
-## 3.2 Modulatie en Datatransmissie
+## 2.2 Fysische Laag (PHY)
 
-WiFi gebruikt OFDM (Orthogonal Frequency Division Multiplexing).
+### Frequentiebanden
 
-Bits worden gemoduleerd via QAM (Quadrature Amplitude Modulation).
+| Band    | Voordelen                                | Nadelen                             |
+| :-----: | :--------------------------------------: | :---------------------------------: |
+| 2.4 GHz | Groot bereik, beter door muren           | Drukker, lagere snelheid            |
+| 5 GHz   | Hogere snelheid, minder interferentie    | Korter bereik, slechtere penetratie |
+| 6 GHz   | Zeer hoge snelheid, weinig interferentie | Zeer kort bereik                    |
 
-Bitrate:
+Max zendvermogen EU/BE:
 
-Rb = Rs × b  
+| Band    | Frequentie      | Max EIRP | Opmerking           |
+| :-----: | :-------------: | :------: | :-----------------: |
+| 2.4 GHz | 2400-2483.5 MHz | 20 dBm   | Standaard           |
+| 5 GHz   | 5150-5350 MHz   | 23 dBm   | Indoor              |
+| 5 GHz   | 5470-5725 MHz   | 30 dBm   | DFS, outdoor        |
+| 5 GHz   | 5725-5875 MHz   | 14 dBm   | Enkel outdoor       |
+| 6 GHz   | 5945-7125 MHz   | 30 dBm   | DFS, indoor/outdoor |
 
-waar:
-- Rb = bitrate (bit/s)
-- Rs = symbol rate (symbolen/s)
-- b = bits per symbool
+- 2.4 GHz: 14 kanalen (1,6,11 niet-overlappend)  
+- 5 GHz: 24 kanalen, breedte 20/40/80/160 MHz  
+- 6 GHz: 59 kanalen, zeer weinig congestie  
 
-Voorbeeld:
-64-QAM → b = 6 bits per symbool
+![2.4 GHz](/doc/kyell/assets/2.4%20GHz%20band.png)  
+![5 GHz](/doc/kyell/assets/5%20GHz%20band.png)  
+![6 GHz](/doc/kyell/assets/6%20GHz%20band.png)
 
----
+### Modulatie
 
-# 4. Netwerkdetectie
+| Modulatie | Bits per symbool | Beschrijving                 |
+| :-------: | :--------------: | :--------------------------: |
+| BPSK      | 1                | Robuust, lage snelheid       |
+| QPSK      | 2                | Robuust, lage snelheid       |
+| 16-QAM    | 4                | Middelmatig, hogere snelheid |
+| 64-QAM    | 6                | Hogere snelheid              |
+| 256-QAM   | 8                | Zeer hoge snelheid           |
+| 1024-QAM  | 10               | Zeer hoge snelheid           |
 
-## 4.1 Passive Scanning
+**OFDM**: verdeelt spectrum in subcarriers (parallelle snelwegen).  
+**QAM**: amplitude + fase modulatie, meer bits per symbool, hogere SNR nodig.
 
-Access points versturen periodiek beacon frames.
+![OFDM](/doc/kyell/assets/ofdm.png)  
+![QAM](/doc/kyell/assets/QAM%20modulatie.png)
 
-Inhoud beacon:
-- SSID
-- BSSID
-- Kanaal
-- Ondersteunde datarates
-- Beveiligingstype
+### Bitrate
 
----
-
-## 4.2 Active Scanning
-
-Client verstuurt een probe request.  
-Access point antwoordt met probe response.
-
-Verschil:
-- Passive scanning = luisteren
-- Active scanning = actief opvragen
-
----
-
-# 5. Authenticatie en Associatie
-
-## 5.1 Authenticatie
-
-Client → Authentication Request  
-Access Point → Authentication Response  
-
-Bij beveiligde netwerken volgt daarna een key exchange.
+- `Bitrate = Symbol Rate x Bits per Symbool`  
+- Hogere modulatie → hogere snelheid, maar gevoeliger voor ruis  
+- SNR > 34 dBmV nodig voor 256-QAM bij Telenet downstream
 
 ---
 
-## 5.2 Associatie
+## 2.3 MAC Laag
 
-Client → Association Request  
-Access Point → Association Response  
+### Scanning
 
-De client ontvangt een Association ID (AID).
+- **Passive Scan**: Luistert naar beacon frames (energiezuinig)  
+- **Active Scan**: Stuurt probe requests uit (sneller)  
 
----
+### Authenticatie
 
-# 6. Beveiliging
+| Type                  | Kenmerken                                      |
+|-----------------------|-----------------------------------------------|
+| Open System           | Snel, geen beveiliging                         |
+| WPA2/WPA3 Personal    | PSK, thuisnetwerken, betere beveiliging       |
+| WPA2/WPA3 Enterprise  | RADIUS-server, unieke gebruikers, sterkste beveiliging |
 
-Moderne WiFi-netwerken gebruiken:
+### Associatie
 
-- WPA2
-- WPA3
+- Association Request → info over apparaat en gewenste netwerkconfiguratie  
+- Association Response → statuscode, toegewezen AID, ondersteunde snelheden  
+- WPA2 4-Way Handshake voor veilige verbinding
 
-Tijdens de 4-way handshake wordt een sessiesleutel gegenereerd.
+### Datatransmissie
 
-Conceptueel:
+- **CSMA/CA**: Carrier Sense, collision avoidance  
+- **Backoff Mechanisme**: willekeurige wachttijd bij bezet medium  
+- **ACK**: bevestiging van succesvolle ontvangst
 
-PTK = f(PMK, Nonce, MAC)
+### Frame Types
 
-waar:
-- PMK = Pairwise Master Key
-- PTK = Pairwise Transient Key
-- Nonce = willekeurig getal
-- MAC = MAC-adressen van beide partijen
+| Type             | Beschrijving |
+|-----------------|-------------|
+| Management Frames | Beacon, Probe, Authentication, Association |
+| Control Frames    | ACK, RTS, CTS, NACK |
+| Data Frames       | Eigenlijke payload, MAC-adressen, encryptie |
 
-Het wachtwoord zelf wordt niet verzonden.
+### Foutdetectie
 
----
-
-# 7. Mediumtoegang – CSMA/CA
-
-WiFi gebruikt Carrier Sense Multiple Access with Collision Avoidance.
-
-Proces:
-
-1. Controleer of kanaal vrij is.
-2. Wacht DIFS (Distributed Interframe Space).
-3. Kies random backoff.
-4. Verstuur frame.
-5. Wacht op ACK.
-
-Backoff-berekening:
-
-Backoff = Random(0,CW) × SlotTime  
-
-waar:
-- CW = Contention Window
-- SlotTime = vaste tijdseenheid afhankelijk van standaard
+- **CRC**: detecteert fouten  
+- **Hertransmissie**: opnieuw verzenden bij fout of geen ACK
 
 ---
 
-# 8. Frame Structuur
+## 4 Modulatie Uitleg – OFDM & QAM
 
-WiFi onderscheidt drie frametypes:
+### OFDM (Orthogonal Frequency Division Multiplexing)
 
-## 8.1 Management Frames
-Voorbeeld:
-- Beacon
-- Probe
-- Authentication
-- Association
+`OFDM` verdeelt het beschikbare spectrum in meerdere subcarriers, elk gemoduleerd met een lagere snelheid.
 
-## 8.2 Control Frames
-Voorbeeld:
-- ACK
-- RTS
-- CTS
+- Voordelen: hoge efficiëntie, robuust tegen multipath fading, geschikt voor hoge snelheden.  
+- Nadelen: complex, gevoelig voor frequentie-offsets.  
+- Wordt gebruikt in standaarden: `802.11a/g/n/ac/ax`.  
+- Elke subcarrier kan gemoduleerd worden met `BPSK`, `QPSK`, `16-QAM`, `64-QAM`, `256-QAM` of `1024-QAM`.  
 
-## 8.3 Data Frames
+**Werking van OFDM:**
 
-Een data frame bevat:
+1. Data wordt opgesplitst in meerdere parallelle datastromen.  
+2. Elke datastroom wordt gemoduleerd met een specifieke modulatie (`BPSK`, `QPSK`, `16-QAM`, etc.).  
+3. De gemoduleerde stromen worden toegewezen aan specifieke subcarriers.  
+4. Subcarriers worden gecombineerd en verzonden.  
+5. Ontvanger scheidt, demoduleert en reconstrueert de oorspronkelijke data.  
+6. Guard interval vermindert intersymbol interference (ISI).  
 
-- Frame Control
-- Duration
-- MAC-adressen
-- Sequence Number
-- Payload
-- FCS (Frame Check Sequence)
+![OFDM](/doc/kyell/assets/ofdm.png)  
 
 ---
 
-# 9. Foutdetectie en Betrouwbaarheid
+### QAM (Quadrature Amplitude Modulation)
 
-WiFi gebruikt CRC (Cyclic Redundancy Check).
+`QAM` combineert amplitude- en fase-modulatie om meerdere bits per symbool te coderen.
 
-Indien CRC fout is:
-- Geen ACK
-- Hertransmissie
+| Modulatie | Bits per symbool | Symbolen | Toepassing |
+|-----------|----------------|----------|------------|
+| BPSK      | 1              | 2        | lage snelheid, lange afstand |
+| QPSK      | 2              | 4        | lage/moderate snelheid |
+| 16-QAM    | 4              | 16       | gemiddelde snelheid |
+| 64-QAM    | 6              | 64       | hoge snelheid |
+| 256-QAM   | 8              | 256      | zeer hoge snelheid |
+| 1024-QAM  | 10             | 1024     | ultra hoge snelheid |
 
-Betrouwbaarheid wordt dus op Layer 2 verzekerd.
+**Werking van QAM:**
 
----
+1. Bits worden gegroepeerd volgens de modulatie.  
+2. Elk blok bits wordt toegewezen aan een symbool in de constellatie.  
+1. Symbool wordt omgezet in een analoog signaal (fase en amplitude).  
+1. Ontvanger demoduleert om de oorspronkelijke bits terug te krijgen.  
 
-# 10. Kanaalgebruik en Interferentie
+💡 Hoe hoger de modulatie, hoe meer bits per symbool, maar hoe gevoeliger voor ruis en interferentie.  
 
-## 10.1 Kanaalindeling
+- In WiFi wordt QAM vaak gecombineerd met OFDM, waarbij elke subcarrier gemoduleerd wordt afhankelijk van signaalsterkte en kwaliteit.  
+- Bijvoorbeeld bij Telenet: `256-QAM downstream` (van netwerk naar gebruiker), `64-QAM upstream` (van gebruiker naar netwerk).  
+- `SNR` (Signal-to-Noise Ratio) bepaalt de maximale modulatie: hogere SNR → hogere modulatie → hogere snelheid.
 
-In de 2.4 GHz-band overlappen kanalen elkaar.  
-Niet-overlappende kanalen zijn meestal:
-
-- 1
-- 6
-- 11
-
-## 10.2 Invloeden op Performantie
-
-- Interferentie
-- Multipath reflectie
-- Obstakels
-- Druk bezette kanalen
-
-Impact:
-- Lagere throughput
-- Hogere latency
-- Meer hertransmissies
+![QAM](/doc/kyell/assets/QAM%20modulatie.png)
 
 ---
 
-# 11. Conclusie
+# 3 Overzicht WiFi – PHY & MAC
 
-WiFi volgens IEEE 802.11 is een geïntegreerd communicatiesysteem dat:
+```mermaid
+flowchart TD
+    %% Stijlen
+    classDef phy fill:#e0f7fa,stroke:#006064,stroke-width:2px;
+    classDef mac fill:#fff3e0,stroke:#e65100,stroke-width:2px;
+    classDef scan fill:#ffecb3,stroke:#ff6f00,stroke-width:2px;
+    classDef auth fill:#c8e6c9,stroke:#2e7d32,stroke-width:2px;
+    classDef assoc fill:#d1c4e9,stroke:#512da8,stroke-width:2px;
+    classDef data fill:#ffcdd2,stroke:#b71c1c,stroke-width:2px;
+    classDef frame fill:#b3e5fc,stroke:#0277bd,stroke-width:2px;
+    classDef crc fill:#f0f4c3,stroke:#827717,stroke-width:2px;
 
-- Radiotransmissie gebruikt via OFDM
-- Mediumtoegang regelt via CSMA/CA
-- Authenticatie en encryptie toepast
-- Fouten detecteert met CRC
-- Betrouwbaarheid garandeert via ACK-mechanismen
+    %% Hoofdstructuur
+    A[WiFi Netwerk] --> B[IEEE 802.11 Standaard]
 
-Het combineert fysica, protocollen en cryptografie in één coherent netwerkmodel.
+    B --> C[Fysische Laag PHY]:::phy
+    B --> D[MAC Laag]:::mac
+
+    %% PHY
+    C --> C1[Frequentiebanden]:::phy
+    C1 --> C11[2.4 GHz]:::phy
+    C1 --> C12[5 GHz]:::phy
+    C1 --> C13[6 GHz]:::phy
+
+    C --> C2[Modulatie]:::phy
+    C2 --> C21[OFDM]:::phy
+    C2 --> C22[QAM]:::phy
+
+    C --> C3[Bitrate]:::phy
+    C3 --> C31[Symbol Rate]:::phy
+    C3 --> C32[Bits per Symbool]:::phy
+
+    %% MAC
+    D --> D1[Scanning]:::scan
+    D1 --> D11[Passive Scan]:::scan
+    D1 --> D12[Active Scan]:::scan
+
+    D --> D2[Authenticatie]:::auth
+    D2 --> D21[Open System]:::auth
+    D2 --> D22[WPA2 / WPA3]:::auth
+
+    D --> D3[Associatie]:::assoc
+    D3 --> D31[Association Request]:::assoc
+    D3 --> D32[Association Response]:::assoc
+
+    D --> D4[Datatransmissie]:::data
+    D4 --> D41[CSMA/CA]:::data
+    D4 --> D42[Backoff Mechanisme]:::data
+    D4 --> D43[ACK Bevestiging]:::data
+
+    D --> D5[Frame Types]:::frame
+    D5 --> D51[Management Frames]:::frame
+    D5 --> D52[Control Frames]:::frame
+    D5 --> D53[Data Frames]:::frame
+
+    D --> D6[Foutdetectie]:::crc
+    D6 --> D61[CRC Controle]:::crc
+    D6 --> D62[Hertransmissie]:::crc
+```
