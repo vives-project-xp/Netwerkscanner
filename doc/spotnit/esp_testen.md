@@ -136,4 +136,26 @@ De nieuwe positie berekening manier werkt stukken beter dan de vorige maar nog n
 
 # test 10
 Op school zelfde resultaat als thuis niet zo nauwkeurig
-![alt text](image-4.png)  
+![alt text](image-4.png) 
+
+
+# test 11
+simple fingerprinting.  
+werkt soms maar is voorlopig nog onnauwkeuriger dan de trilateratie.
+De fout was zit in het berkeden.
+Ik neem de som van het verschil tussen de huidige meting en de het datapunt.
+Maar as een datapunt niet veel netwerken overeenkomend heeft zal deze altijd de kleinste fout hebben en zal het denken daar te zijn.
+
+heb dit verbeterd door te delen door het aantal netwerken die de huidige locatie gevonden heeft.
+
+heb het nog verbeterd door een counter te zetten in de datapoint class die bijhoud hoeveel netwerken er nu echt meetellen
+
+# test 12
+gemiddelde van enkel de overeenkomstige netwerken is veelbelovend.
+tijdens de test in 3 ruimtes is het 3 van de 10 keer fout.
+door hetzelfde ruimte meerdere keren te scannen en toe te voegen aan de datapunten is het accurater in het voorspelen van de locatie
+
+Het zou een idee kunnen zijn om op elke fingerprint locatie een min en max en gemiddelde bij te houden per netwerk. en bij het bereken van de locatie dan procentueel de rssi fout verschillend te laten meetellen.
+
+# test 13
+Op school hetzelfde resultaat als thuis.
