@@ -2,11 +2,11 @@
 
 ## WiFi Modes
 
-| Mode           | Beschrijving                                 |
-|----------------|----------------------------------------------|
-| `Station`      | Verbindt met een bestaand WiFi netwerk       |
-| `Access Point` | Maakt een eigen WiFi netwerk aan             |
-| `Station + AP` | Kan beide tegelijk                            |
+| Mode           | Beschrijving                           |
+| -------------- | -------------------------------------- |
+| `Station`      | Verbindt met een bestaand WiFi netwerk |
+| `Access Point` | Maakt een eigen WiFi netwerk aan       |
+| `Station + AP` | Kan beide tegelijk                     |
 
 ## Veelgebruikte WiFi Commando's (ESP)
 
@@ -20,7 +20,7 @@ WiFi.disconnect();                 // Verbreekt verbinding
 ## WiFi Security Types
 
 | Type      | Omschrijving          |
-|-----------|----------------------|
+| :-------: | :-------------------: |
 | `WEP`     | Verouderd, onveilig   |
 | `WPA`     | Verbeterd, matig      |
 | `WPA2`    | Modern, veilig        |
@@ -28,11 +28,11 @@ WiFi.disconnect();                 // Verbreekt verbinding
 
 ## Veelvoorkomende Problemen
 
-| Probleem                 | Mogelijke Oplossing               |
-|---------------------------|----------------------------------|
-| Kan niet verbinden        | Controleer SSID en wachtwoord    |
-| Slechte signaalsterkte    | Verplaats dichter bij router/AP  |
-| IP-adres niet verkregen   | Controleer DHCP instellingen     |
+| Probleem                | Mogelijke Oplossing             |
+| :---------------------: | :-----------------------------: |
+| Kan niet verbinden      | Controleer SSID en wachtwoord   |
+| Slechte signaalsterkte  | Verplaats dichter bij router/AP |
+| IP-adres niet verkregen | Controleer DHCP instellingen    |
 
 ## WiFi Scan Voorbeeld (ESP)
 
@@ -191,11 +191,11 @@ Max zendvermogen EU/BE:
 
 ### Authenticatie
 
-| Type                  | Kenmerken                                      |
-|-----------------------|-----------------------------------------------|
-| Open System           | Snel, geen beveiliging                         |
-| WPA2/WPA3 Personal    | PSK, thuisnetwerken, betere beveiliging       |
-| WPA2/WPA3 Enterprise  | RADIUS-server, unieke gebruikers, sterkste beveiliging |
+|         Type         |                       Kenmerken                        |
+| :------------------: | :----------------------------------------------------: |
+|     Open System      |                 Snel, geen beveiliging                 |
+|  WPA2/WPA3 Personal  |        PSK, thuisnetwerken, betere beveiliging         |
+| WPA2/WPA3 Enterprise | RADIUS-server, unieke gebruikers, sterkste beveiliging |
 
 ### Associatie
 
@@ -211,11 +211,11 @@ Max zendvermogen EU/BE:
 
 ### Frame Types
 
-| Type             | Beschrijving |
-|-----------------|-------------|
-| Management Frames | Beacon, Probe, Authentication, Association |
-| Control Frames    | ACK, RTS, CTS, NACK |
-| Data Frames       | Eigenlijke payload, MAC-adressen, encryptie |
+|       Type        |                Beschrijving                 |
+| :---------------: | :-----------------------------------------: |
+| Management Frames | Beacon, Probe, Authentication, Association  |
+|  Control Frames   |             ACK, RTS, CTS, NACK             |
+|    Data Frames    | Eigenlijke payload, MAC-adressen, encryptie |
 
 ### Foutdetectie
 
@@ -252,21 +252,21 @@ Max zendvermogen EU/BE:
 
 `QAM` combineert amplitude- en fase-modulatie om meerdere bits per symbool te coderen.
 
-| Modulatie | Bits per symbool | Symbolen | Toepassing |
-|-----------|----------------|----------|------------|
-| BPSK      | 1              | 2        | lage snelheid, lange afstand |
-| QPSK      | 2              | 4        | lage/moderate snelheid |
-| 16-QAM    | 4              | 16       | gemiddelde snelheid |
-| 64-QAM    | 6              | 64       | hoge snelheid |
-| 256-QAM   | 8              | 256      | zeer hoge snelheid |
-| 1024-QAM  | 10             | 1024     | ultra hoge snelheid |
+| Modulatie | Bits per symbool | Symbolen | Toepassing                   |
+| :-------: | :--------------: | :------: | :--------------------------: |
+| BPSK      | 1                | 2        | lage snelheid, lange afstand |
+| QPSK      | 2                | 4        | lage/moderate snelheid       |
+| 16-QAM    | 4                | 16       | gemiddelde snelheid          |
+| 64-QAM    | 6                | 64       | hoge snelheid                |
+| 256-QAM   | 8                | 256      | zeer hoge snelheid           |
+| 1024-QAM  | 10               | 1024     | ultra hoge snelheid          |
 
 **Werking van QAM:**
 
 1. Bits worden gegroepeerd volgens de modulatie.  
 2. Elk blok bits wordt toegewezen aan een symbool in de constellatie.  
-1. Symbool wordt omgezet in een analoog signaal (fase en amplitude).  
-1. Ontvanger demoduleert om de oorspronkelijke bits terug te krijgen.  
+3. Symbool wordt omgezet in een analoog signaal (fase en amplitude).  
+4. Ontvanger demoduleert om de oorspronkelijke bits terug te krijgen.  
 
 💡 Hoe hoger de modulatie, hoe meer bits per symbool, maar hoe gevoeliger voor ruis en interferentie.  
 
