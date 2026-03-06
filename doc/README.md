@@ -1,5 +1,10 @@
 # Documentatie map
 
+[ftm research](./varia/esp/ftm%20research.md)  
+[wifi research](./varia/esp/wifi%20research.md)  
+[wifi handige img](./varia/assets/)
+
+
 Deze map bevat alle projectdocumentatie voor de Netwerkscanner. Het doel is om de keuzes, ontwerpen en instructies die niet in de broncode thuishoren, centraal te bewaren zodat het project makkelijk te begrijpen, te onderhouden en te presenteren is.
 
 Wat je hier kan verwachten:
