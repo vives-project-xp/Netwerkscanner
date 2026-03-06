@@ -1,12 +1,12 @@
 #include <Arduino.h>
 #include <WiFi.h>
+#include <vector>
 
-#include "access_point.h"
 #include "debug.h"
 
 class DataPoint
 {
-public:
+private:
     float x = 0;
     float y = 0;
     float deviationSum = 0;
@@ -18,42 +18,50 @@ public:
     // --- Position ---
     int getX() const { return x; }
     int getY() const { return y; }
-    float getDeviationSum() const { return deviationSum; }
-    float getDeviationSumAverage() const { return deviationSum / deviationCounter; }
-    void AddDeviation(float deviation) { deviationSum += deviation; }
-    void resetDeviationSum() { deviationSum = 0; }
+    float GetDeviationSum() const { return deviationSum; }
+    float GetDeviationSumAverage() const { return deviationSum / deviationCounter; }
+    void AddDeviation(float deviation)
+    {
+        deviationSum += deviation;
+        deviationCounter++;
+    }
+    void ResetDeviation()
+    {
+        deviationSum = 0;
+        deviationCounter = 0;
+    }
 
-    void setPoint(int xValue, int yValue)
+    void SetPoint(int xValue, int yValue)
     {
         x = xValue;
         y = yValue;
     }
 
     // --- RSSI / MAC toevoegen ---
-    void addMeasurement(int rssiValue, const String &macAddress)
+    void AddMeasurement(int rssiValue, const String &macAddress)
     {
         rssi.push_back(rssiValue);
         mac.push_back(macAddress);
     }
     // --- Aantal metingen ---
-    int getMeasurementCount() const
+    int GetMeasurementCount() const
     {
         return rssi.size();
     }
 
     // --- Individuele meting ophalen ---
-    int getRssi(int index) const
+    int GetRssi(int index) const
     {
         return rssi.at(index);
     }
 
-    String getMac(int index) const
+    String GetMac(int index) const
     {
         return mac.at(index);
     }
-    int constainsMac(String findMac) // returns index of mac, not found = -1
+    int ConstainsMac(String findMac) // returns index of mac, not found = -1
     {
-        for (int i = 0; i < getMeasurementCount(); i++)
+        for (int i = 0; i < GetMeasurementCount(); i++)
         {
             if (findMac == mac.at(i))
             {
@@ -62,7 +70,7 @@ public:
         }
         return -1;
     }
-    void clearMeasurements()
+    void ClearMeasurements()
     {
         rssi.clear();
         mac.clear();
@@ -74,7 +82,7 @@ struct Location
     float y;
 };
 
-String Serial_ask(String question = "") // leest tot '\n' karakter
+String SerialAsk(String question = "") // leest tot '\n' karakter
 {
 
     Serial.println(question);
@@ -94,7 +102,7 @@ String Serial_ask(String question = "") // leest tot '\n' karakter
 std::vector<DataPoint> datapoints;
 void Scan(DataPoint &dp) // no position
 {
-    dp.clearMeasurements();
+    dp.ClearMeasurements();
     int aantalNetwerken = 0;
     aantalNetwerken = WiFi.scanNetworks(false, true, true, 150);
     if (aantalNetwerken <= 0)
@@ -104,20 +112,20 @@ void Scan(DataPoint &dp) // no position
 
     for (int i = 0; i < aantalNetwerken; i++)
     {
-        dp.addMeasurement(WiFi.RSSI(i), WiFi.BSSIDstr(i));
+        dp.AddMeasurement(WiFi.RSSI(i), WiFi.BSSIDstr(i));
     }
 }
 
 void Scan(std::vector<DataPoint> &vec) // has position
 {
     DataPoint dp;
-    dp.setPoint(
-        Serial_ask("Enter X cor").toInt(),
-        Serial_ask("Enter Y cor").toInt());
+    dp.SetPoint(
+        SerialAsk("Enter X cor").toInt(),
+        SerialAsk("Enter Y cor").toInt());
     Scan(dp);
     vec.push_back(dp);
 }
-String RSSItoPoints(int rssi)
+String RssiToPoints(int rssi)
 {
     String container;
     for (int i = 0; i < std::abs(rssi / 5); i++)
@@ -127,7 +135,7 @@ String RSSItoPoints(int rssi)
     return container;
 }
 
-void printData_rssi_bssid()
+void PrintDataRssiBssid()
 {
     for (int i = 0; i < datapoints.size(); i++)
     {
@@ -135,15 +143,15 @@ void printData_rssi_bssid()
         Serial.println("meetpunt" + String(i));
         Serial.println("X = " + String(datapoints[i].getX()));
         Serial.println("Y = " + String(datapoints[i].getY()));
-        Serial.println(datapoints[i].getMeasurementCount());
-        for (int j = 0; j < datapoints[i].getMeasurementCount(); j++)
+        Serial.println(datapoints[i].GetMeasurementCount());
+        for (int j = 0; j < datapoints[i].GetMeasurementCount(); j++)
         {
-            Serial.print(String(datapoints[i].getRssi(j)) + " - " + String(datapoints[i].getMac(j)));
-            Serial.println("    " + RSSItoPoints(datapoints[i].getRssi(j)));
+            Serial.print(String(datapoints[i].GetRssi(j)) + " - " + String(datapoints[i].GetMac(j)));
+            Serial.println("    " + RssiToPoints(datapoints[i].GetRssi(j)));
         }
     }
 }
-void printData()
+void PrintData()
 {
     for (int i = 0; i < datapoints.size(); i++)
     {
@@ -151,11 +159,11 @@ void printData()
         Serial.println("meetpunt" + String(i));
         Serial.println("X = " + String(datapoints[i].getX()));
         Serial.println("Y = " + String(datapoints[i].getY()));
-        Serial.println(datapoints[i].getMeasurementCount());
+        Serial.println(datapoints[i].GetMeasurementCount());
     }
 }
 
-Location findLocation() //
+Location FindLocation()
 {
     float x = 0;
     float y = 0;
@@ -166,40 +174,38 @@ Location findLocation() //
 
     for (int i = 0; i < datapoints.size(); i++) // overloop alle meetpunten
     {
-        datapoints.at(i).resetDeviationSum();
-        datapoints.at(i).deviationCounter = 0;
-        for (int j = 0; j < findLocation.getMeasurementCount(); j++) // overloop alle mac's in datapoint
+        datapoints.at(i).ResetDeviation();
+        for (int j = 0; j < findLocation.GetMeasurementCount(); j++) // overloop alle mac's in datapoint
         {                                                            // tel de som van de fouten op
             // vind mac van scan
             // vind rssi van scan
-            String mac = findLocation.getMac(j);
-            int rssi = findLocation.getRssi(j);
+            String mac = findLocation.GetMac(j);
+            int rssi = findLocation.GetRssi(j);
 
             // zit mac die voorkomt in scan ook in datapoint
-            int macIndex = datapoints.at(i).constainsMac(mac);
+            int macIndex = datapoints.at(i).ConstainsMac(mac);
             if (macIndex == -1)
             {
                 continue;
             }
 
             // vind rssi van mac
-            int macRssi = datapoints.at(i).getRssi(macIndex);
+            int macRssi = datapoints.at(i).GetRssi(macIndex);
             // update sum of deviation
             datapoints.at(i).AddDeviation(std::abs(rssi - macRssi));
-            datapoints.at(i).deviationCounter++;
         }
     }
 
     // find datapoint whit least deviation.
     int indexLeastDeviation = 0;
 
-    float leastDeviation = datapoints.at(0).getDeviationSumAverage();
+    float leastDeviation = datapoints.at(0).GetDeviationSumAverage();
     for (int i = 0; i < datapoints.size(); i++)
     {
-        debugln("deviation average" + String(datapoints.at(i).getDeviationSumAverage()));
-        if (datapoints.at(i).getDeviationSumAverage() < leastDeviation)
+        debugln("deviation average" + String(datapoints.at(i).GetDeviationSumAverage()));
+        if (datapoints.at(i).GetDeviationSumAverage() < leastDeviation)
         {
-            leastDeviation = datapoints.at(i).getDeviationSumAverage();
+            leastDeviation = datapoints.at(i).GetDeviationSumAverage();
             indexLeastDeviation = i;
         }
     }
@@ -212,19 +218,19 @@ Location findLocation() //
     return {(float)datapoints[indexLeastDeviation].getX(), (float)datapoints[indexLeastDeviation].getY()};
 }
 
-void test_simple_fingerprinting()
+void TestSimpleFingerprinting()
 {
     datapoints;
 
     Scan(datapoints);
-    printData();
+    PrintData();
     Scan(datapoints);
-    printData();
+    PrintData();
     Scan(datapoints);
-    printData();
+    PrintData();
 
-    while (Serial_ask("waar ben ik")=="f")
+    while (SerialAsk("waar ben ik") == "f")
     {
-        findLocation();
+        FindLocation();
     }
 }

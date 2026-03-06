@@ -3,15 +3,15 @@
 
 #include "access_point.h"
 
-struct trilaterationResult
+struct TrilaterationResult
 {
     float x;
     float y;
     float RMSE;
 };
 
-void test_TrilateratieLeastSquares();
-trilaterationResult TrilateratieLeastSquares(const std::vector<AccessPoint> &aps,
+void TestTrilateratieLeastSquares();
+TrilaterationResult TrilateratieLeastSquares(const std::vector<AccessPoint> &aps,
                                              const std::vector<double> &distances);
 
 #endif

@@ -8,7 +8,7 @@
 
 #include "test1_2_3.h"
 
-void test1_2() // vind alle netwerken.
+void Test1_2() // vind alle netwerken.
 {
   Serial.println("Scan start");
 
@@ -88,7 +88,7 @@ void test1_2() // vind alle netwerken.
   // Wait a bit before scanning again.
 }
 
-void test3() // snelheid test
+void Test3() // snelheid test
 {
 
   const int scans = 10;

@@ -35,7 +35,7 @@ void VisualTrilateratie(const std::vector<AccessPoint> &aps,
 // [a b][x] = [e]
 // [c d][y] = [f]
 //& betekent dat de waarde niet gekopieerd wordt maar regstreeks zal worden aangepast
-bool solve2x2(double a, double b, double c, double d,
+bool Solve2x2(double a, double b, double c, double d,
               double e, double f,
               double &outX, double &outY)
 {
@@ -49,7 +49,7 @@ bool solve2x2(double a, double b, double c, double d,
 }
 
 // Least Squares Trilateration for N >= 3
-trilaterationResult TrilateratieLeastSquares(const std::vector<AccessPoint> &aps,
+TrilaterationResult TrilateratieLeastSquares(const std::vector<AccessPoint> &aps,
                                              const std::vector<double> &distances)
 {
     int n = aps.size();
@@ -110,7 +110,7 @@ trilaterationResult TrilateratieLeastSquares(const std::vector<AccessPoint> &aps
     }
 
     double x, y;
-    bool ok = solve2x2(ATA00, ATA01,
+    bool ok = Solve2x2(ATA00, ATA01,
                        ATA01, ATA11,
                        ATb0, ATb1,
                        x, y);
@@ -137,7 +137,7 @@ trilaterationResult TrilateratieLeastSquares(const std::vector<AccessPoint> &aps
     return {(float)x, (float)y, RMSE};
 }
 
-void test_TrilateratieLeastSquares()
+void TestTrilateratieLeastSquares()
 {
     std::vector<AccessPoint> aps = {// mogen in willekeurige volgorde, moet niet met 0,0 starten
                                     {10, 10},
@@ -154,10 +154,10 @@ void test_TrilateratieLeastSquares()
         7};
 
     AccessPoint device;
-    trilaterationResult resultaat = TrilateratieLeastSquares(aps, distances);
+    TrilaterationResult resultaat = TrilateratieLeastSquares(aps, distances);
     device.SetPos(resultaat.x, resultaat.y);
     device.SetRMSE(resultaat.RMSE);
-    debugln("test_TrilateratieLeastSquares");
+    debugln("TestTrilateratieLeastSquares");
     debugln("positie = " + String(device.GetX()) + " " + String(device.GetY()));
     debugln("RMSE " + String(device.GetRMSE()));
     return;
