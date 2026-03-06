@@ -19,6 +19,9 @@ de studenten die aan dit project werken zijn:
 | Kevin Bakeland     | [<img src="https://github.com/KevinBakeland.png" width="50" height="50">](https://github.com/KevinBakeland) |
 | Spotnit            | [<img src="https://github.com/Spotnit.png" width="50" height="50">](https://github.com/Spotnit)             |
 
+## testen positie bepaling
+[testen van positie bepaling via wifi](./doc/positiebepaling/esp_testen.md)
+
 ## Functies
 
 - [ ] netwerkscanning ( inkaart bregen van apparaten binnen een lokaal netwerk)
