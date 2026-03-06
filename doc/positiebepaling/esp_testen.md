@@ -159,3 +159,8 @@ Het zou een idee kunnen zijn om op elke fingerprint locatie een min en max en ge
 
 # test 13
 Op school hetzelfde resultaat als thuis.
+
+# test 14 
+Succes!!! Door een logica fout in de code werd telkens een mac address niet gevonden werd stopte de loop met vergelijken voor alle volgende mac adressen. De oplossing was om enkel die ene over te slaan.  
+Momenteel kan het systeem de postie bepalen met een afstand van ongeveer 4 meter tussen de datapunten.
+
