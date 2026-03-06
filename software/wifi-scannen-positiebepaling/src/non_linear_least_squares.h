@@ -6,7 +6,7 @@ struct Punt
 {
     double x, y;
 };
-int test_non_linear_least_squares(const std::vector<AccessPoint> &aps1,
+int TestNonLinearLeastSquares(const std::vector<AccessPoint> &aps1,
                                   const std::vector<double> &distances1);
-int test_non_linear_least_squares();
+int TestNonLinearLeastSquares();
 #endif

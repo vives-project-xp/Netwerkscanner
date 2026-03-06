@@ -11,7 +11,7 @@ struct Punt
 };
 
 // Kostenfunctie
-double kostenFunctie(const Punt &schatting, const std::vector<Punt> &aps, const std::vector<double> &afstanden)
+double KostenFunctie(const Punt &schatting, const std::vector<Punt> &aps, const std::vector<double> &afstanden)
 {
     double kosten = 0.0;
     for (size_t i = 0; i < aps.size(); ++i)
@@ -26,7 +26,7 @@ double kostenFunctie(const Punt &schatting, const std::vector<Punt> &aps, const 
 }
 
 // Gradiëntafdaling (Gradient Descent)
-Punt gradientAfdaling(const std::vector<Punt> &aps, const std::vector<double> &afstanden, Punt initieel, double lr = 0.01, int maxIter = 10000, double tol = 1e-6)
+Punt GradientAfdaling(const std::vector<Punt> &aps, const std::vector<double> &afstanden, Punt initieel, double lr = 0.01, int maxIter = 10000, double tol = 1e-6)
 {
     Punt schatting = initieel;
     for (int iter = 0; iter < maxIter; ++iter)
@@ -53,7 +53,7 @@ Punt gradientAfdaling(const std::vector<Punt> &aps, const std::vector<double> &a
 }
 
 // Eenvoudige 2x2 covariantiematrix berekenen
-std::pair<std::pair<double, double>, double> berekenCovariantie(const Punt &schatting, const std::vector<Punt> &aps, const std::vector<double> &afstanden)
+std::pair<std::pair<double, double>, double> BerekenCovariantie(const Punt &schatting, const std::vector<Punt> &aps, const std::vector<double> &afstanden)
 {
     double J[2][2] = {0}; // Informatie matrix
 
@@ -92,7 +92,7 @@ std::pair<std::pair<double, double>, double> berekenCovariantie(const Punt &scha
     return {{cov00, cov11}, cov01};
 }
 
-int test_non_linear_least_squares(const std::vector<AccessPoint> &aps1,
+int TestNonLinearLeastSquares(const std::vector<AccessPoint> &aps1,
                                   const std::vector<double> &distances1)
 {
     // Bekende locaties van Access Points (aps) en gemeten afstanden
@@ -105,12 +105,12 @@ int test_non_linear_least_squares(const std::vector<AccessPoint> &aps1,
     std::vector<double> afstanden = distances1;
 
     Punt initieel = {5, 5};
-    Punt schatting = gradientAfdaling(aps, afstanden, initieel);
+    Punt schatting = GradientAfdaling(aps, afstanden, initieel);
 
     std::cout << "Geschatte locatie: (" << schatting.x << ", " << schatting.y << ")\n";
 
     // Covariantie ophalen: {{cov00, cov11}, cov01}
-    auto cov = berekenCovariantie(schatting, aps, afstanden);
+    auto cov = BerekenCovariantie(schatting, aps, afstanden);
     double c00 = cov.first.first;
     double c11 = cov.first.second;
     double c01 = cov.second;

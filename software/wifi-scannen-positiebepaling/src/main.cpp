@@ -4,8 +4,6 @@
 #include <vector>
 #include "WiFi.h"
 
-using namespace std;
-
 #include "debug.h"
 bool debugStatus = true;
 
@@ -15,15 +13,15 @@ bool debugStatus = true;
 #include "non_linear_least_squares.h"
 #include "simple_fingerprinting.h"
 
-void UpdateRSSI(std::vector<AccessPoint> &aps, int aantalNetwerken)
+void AddRSSItoMac(std::vector<AccessPoint> &aps, int aantalNetwerken) //  bij gevonden mac juiste rssi toevoegen.
 {
   for (int i = 0; i < aantalNetwerken; i++)
   {
-    String mac = WiFi.BSSIDstr(i);
+    String macAddress = WiFi.BSSIDstr(i);
 
     for (int j = 0; j < aps.size(); j++)
     {
-      if (mac.indexOf(aps[j].GetMacPrefix()) >= 0)
+      if (macAddress.indexOf(aps[j].GetMacPrefix()) >= 0)
       {
         aps[j].AddRSSI(WiFi.RSSI(i));
       }
@@ -48,7 +46,7 @@ void ScanNetworks()
     aantalNetwerken = WiFi.scanNetworks(false, true, true, 100);
     // debugln(String(aantalNetwerken)+" aantal gevonden netwerken");
     //  bij gevonden mac juiste rssi toevoegen.
-    UpdateRSSI(aps, aantalNetwerken);
+    AddRSSItoMac(aps, aantalNetwerken);
     // kalman filter
   }
   debugln("scannen klaar");
@@ -69,8 +67,8 @@ void ScanNetworks()
   }
 
   AccessPoint device;
-  trilaterationResult resultaat = TrilateratieLeastSquares(aps, distances);
-  test_non_linear_least_squares(aps, distances);
+  TrilaterationResult resultaat = TrilateratieLeastSquares(aps, distances);
+  TestNonLinearLeastSquares(aps, distances);
   // device.SetPos(resultaat.x, resultaat.y);
   // device.SetRMSE(resultaat.RMSE);
   debugln("test_TrilateratieLeastSquares");
@@ -80,7 +78,6 @@ void ScanNetworks()
 
 void setup()
 {
-  std::vector<int> v = {10, 20, 30, 40};
   Serial.begin(115200);
 
   // Set WiFi to station mode and disconnect from an AP if it was previously
@@ -96,11 +93,11 @@ void setup()
 
 void loop()
 {
-  // test1_2();
-  //      test3();
-  //    Trilateratie();
+  // Test1_2();
+  // Test3();
+  // Trilateratie();
   //  TrilateratieLeastSquares();
-  // test_TrilateratieLeastSquares();
-  //ScanNetworks();
-  test_simple_fingerprinting();
+  // TestTrilateratieLeastSquares();
+  // ScanNetworks();
+  TestSimpleFingerprinting();
 }
