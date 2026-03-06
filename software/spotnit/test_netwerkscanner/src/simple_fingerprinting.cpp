@@ -117,8 +117,17 @@ void Scan(std::vector<DataPoint> &vec) // has position
     Scan(dp);
     vec.push_back(dp);
 }
+String RSSItoPoints(int rssi)
+{
+    String container;
+    for (int i = 0; i < std::abs(rssi / 5); i++)
+    {
+        container += ".";
+    }
+    return container;
+}
 
-void printData()
+void printData_rssi_bssid()
 {
     for (int i = 0; i < datapoints.size(); i++)
     {
@@ -129,8 +138,20 @@ void printData()
         Serial.println(datapoints[i].getMeasurementCount());
         for (int j = 0; j < datapoints[i].getMeasurementCount(); j++)
         {
-            Serial.println(String(datapoints[i].getRssi(j)) + " - " + String(datapoints[i].getMac(j)));
+            Serial.print(String(datapoints[i].getRssi(j)) + " - " + String(datapoints[i].getMac(j)));
+            Serial.println("    " + RSSItoPoints(datapoints[i].getRssi(j)));
         }
+    }
+}
+void printData()
+{
+    for (int i = 0; i < datapoints.size(); i++)
+    {
+        Serial.println("-------------------------------------------");
+        Serial.println("meetpunt" + String(i));
+        Serial.println("X = " + String(datapoints[i].getX()));
+        Serial.println("Y = " + String(datapoints[i].getY()));
+        Serial.println(datapoints[i].getMeasurementCount());
     }
 }
 
@@ -146,6 +167,7 @@ Location findLocation() //
     for (int i = 0; i < datapoints.size(); i++) // overloop alle meetpunten
     {
         datapoints.at(i).resetDeviationSum();
+        datapoints.at(i).deviationCounter = 0;
         for (int j = 0; j < findLocation.getMeasurementCount(); j++) // overloop alle mac's in datapoint
         {                                                            // tel de som van de fouten op
             // vind mac van scan
@@ -157,7 +179,7 @@ Location findLocation() //
             int macIndex = datapoints.at(i).constainsMac(mac);
             if (macIndex == -1)
             {
-                break;
+                continue;
             }
 
             // vind rssi van mac
@@ -201,8 +223,8 @@ void test_simple_fingerprinting()
     Scan(datapoints);
     printData();
 
-    Serial_ask("waar ben ik");
-    findLocation();
-    Serial_ask("waar ben ik");
-    findLocation();
+    while (Serial_ask("waar ben ik")=="f")
+    {
+        findLocation();
+    }
 }

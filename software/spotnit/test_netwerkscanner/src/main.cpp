@@ -38,11 +38,10 @@ void ScanNetworks()
       {6, 0, "EA:9F:6D:88:2A"},
       {0, 0, "EA:9F:6D:88:25"},
       {0, -7, "EA:9F:6D:88:F5"},
-      //{4, 4, "56:29:C0:8E:47"}
-  };
+      {3, -9, "A8:BA:25:50:A5"}};
 
   unsigned long vorigeMillis = millis();
-  while (millis() - vorigeMillis < 5000) // blijf scannen voor 5 seconden
+  while (millis() - vorigeMillis < 2000) // blijf scannen voor 5 seconden
   {
     // scan wifi netwerken
     int aantalNetwerken = 0;
@@ -98,10 +97,10 @@ void setup()
 void loop()
 {
   // test1_2();
-  //     test3();
-  //   Trilateratie();
-  //   TrilateratieLeastSquares();
-  //   test_TrilateratieLeastSquares();
-  // ScanNetworks();
+  //      test3();
+  //    Trilateratie();
+  //  TrilateratieLeastSquares();
+  // test_TrilateratieLeastSquares();
+  //ScanNetworks();
   test_simple_fingerprinting();
 }
