@@ -10,7 +10,7 @@
 #include "freertos/task.h"
 
 #include <Arduino.h>
-// #include "screen.cpp"
+#include "screen.h"
 #include "Test.h"
 #include "simple_fingerprinting.h"
 #include "WiFi.h"
@@ -39,7 +39,7 @@ void ScanNetworks()
 
     for (int i = 0; i < 10; i++)
     {
-        print_ap_info(&aps[i]); // pass the address of each element
+        PrintApInfo(&aps[i]);
     }
     return;
 }
@@ -57,7 +57,7 @@ extern "C" void app_main(void)
     printf("Build Date: %s\n", __DATE__);
     printf("Build Time: %s\n", __TIME__);
 
-    // ScanNetworks();
+    // 
     // ScreenTest();
 
     WiFi.begin(WIFI_SSID,WIFI_PASSWORD );
@@ -74,7 +74,7 @@ extern "C" void app_main(void)
     printf("send data to server\n");
     MakeJson();
 
-    // Serial.begin(112500);
+    ScanNetworks();
 
     // Serial.println("Arduino");
     // fflush(stdout);

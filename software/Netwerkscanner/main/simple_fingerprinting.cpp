@@ -2,8 +2,6 @@
 #include <WiFi.h>
 #include <vector>
 
-#include "debug.h"
-
 class DataPoint
 {
 private:
@@ -201,19 +199,19 @@ Location FindLocation()
     float leastDeviation = datapoints.at(0).GetDeviationSumAverage();
     for (int i = 0; i < datapoints.size(); i++)
     {
-        debugln("deviation average" + String(datapoints.at(i).GetDeviationSumAverage()));
+        Serial.println("deviation average" + String(datapoints.at(i).GetDeviationSumAverage()));
         if (datapoints.at(i).GetDeviationSumAverage() < leastDeviation)
         {
             leastDeviation = datapoints.at(i).GetDeviationSumAverage();
             indexLeastDeviation = i;
         }
     }
-    debugln("index least deviation " + String(indexLeastDeviation));
+    Serial.println("index least deviation " + String(indexLeastDeviation));
 
-    debug("i thing am at location ");
-    debug(datapoints[indexLeastDeviation].getX());
-    debug(" ");
-    debugln(datapoints[indexLeastDeviation].getY());
+    Serial.print("i thing am at location ");
+    Serial.print(datapoints[indexLeastDeviation].getX());
+    Serial.print(" ");
+    Serial.println(datapoints[indexLeastDeviation].getY());
     return {(float)datapoints[indexLeastDeviation].getX(), (float)datapoints[indexLeastDeviation].getY()};
 }
 
