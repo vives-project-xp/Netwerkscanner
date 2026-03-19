@@ -1,42 +1,24 @@
+
 #include "esp_clk_tree.h"
 #include "esp_wifi.h"
 #include "esp_event.h"
 #include "nvs_flash.h"
 #include "esp_netif.h"
+#include "esp_system.h"
+#include "esp_log.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 
 #include <Arduino.h>
-#include "screen.cpp"
+// #include "screen.cpp"
 #include "Test.h"
-void CheckCpuFreq()
-{
-    uint32_t freq_hz;
-    // Get the frequency of the CPU clock
-    esp_clk_tree_src_get_freq_hz(SOC_MOD_CLK_CPU, ESP_CLK_TREE_SRC_FREQ_PRECISION_EXACT, &freq_hz);
-    printf("CPU Clock: %lu Hz\n", freq_hz);
-}
-void print_ap_info(const wifi_ap_record_t *ap)
-{
-    printf("SSID: %s\n", ap->ssid);
-    printf("BSSID: %02X:%02X:%02X:%02X:%02X:%02X\n",
-           ap->bssid[0], ap->bssid[1], ap->bssid[2],
-           ap->bssid[3], ap->bssid[4], ap->bssid[5]);
-    printf("Primary Channel: %d\n", ap->primary);
-    printf("Secondary Channel: %d\n", ap->second);
-    printf("RSSI: %d\n", ap->rssi);
-    printf("Auth Mode: %d\n", ap->authmode);
-    printf("Pairwise Cipher: %d\n", ap->pairwise_cipher);
-    printf("Group Cipher: %d\n", ap->group_cipher);
-    printf("Antenna: %d\n", ap->ant);
-    printf("PHY Modes: 11b=%d, 11g=%d, 11n=%d, 11a=%d, 11ac=%d, 11ax=%d, LR=%d\n",
-           ap->phy_11b, ap->phy_11g, ap->phy_11n, ap->phy_11a, ap->phy_11ac, ap->phy_11ax, ap->phy_lr);
-    printf("WPS: %d, FTM Responder: %d, FTM Initiator: %d\n",
-           ap->wps, ap->ftm_responder, ap->ftm_initiator);
-    printf("Bandwidth: %d, VHT freq1: %d, VHT freq2: %d\n",
-           ap->bandwidth, ap->vht_ch_freq1, ap->vht_ch_freq2);
-    // Country info
-    printf("Country: %c%c%c\n", ap->country.cc[0], ap->country.cc[1], ap->country.cc[2]);
-    printf("------------------------------------------------\n");
-}
+#include "simple_fingerprinting.h"
+#include "WiFi.h"
+#include "http_post.h"
+#include "api.h"
+#include "http_post.h"
+#include "wifi_key.h"
+
 void ScanNetworks()
 {
     nvs_flash_init();
@@ -59,6 +41,14 @@ void ScanNetworks()
     {
         print_ap_info(&aps[i]); // pass the address of each element
     }
+    return;
+}
+void CheckCpuFreq()
+{
+    uint32_t freq_hz;
+    // Get the frequency of the CPU clock
+    esp_clk_tree_src_get_freq_hz(SOC_MOD_CLK_CPU, ESP_CLK_TREE_SRC_FREQ_PRECISION_EXACT, &freq_hz);
+    printf("CPU Clock: %lu Hz\n", freq_hz);
 }
 extern "C" void app_main(void)
 {
@@ -67,26 +57,31 @@ extern "C" void app_main(void)
     printf("Build Date: %s\n", __DATE__);
     printf("Build Time: %s\n", __TIME__);
 
-    ScreenTest();
+    // ScanNetworks();
+    // ScreenTest();
 
-    vTaskDelay(pdMS_TO_TICKS(5000));
-    Serial.begin(112500);
-    vTaskDelay(pdMS_TO_TICKS(1000));
-    Serial.println("Arduino");
-    fflush(stdout);
-    pinMode(15, OUTPUT);   // many ESP32 boards use GPIO2 for LED
-
-    while (true)
+    WiFi.begin(WIFI_SSID,WIFI_PASSWORD );
+    while (WiFi.status() != WL_CONNECTED)
     {
-        digitalWrite(15, HIGH);
-        delay(100);
-
-        digitalWrite(15, LOW);
-        delay(100);
+        delay(500);
+        Serial.print(".");
     }
+    const char *serverUrl = "http://10.20.10.24:8081/upload";
+
+    String payload(MakeJson());
+    SendJsonPost(payload, serverUrl);
+
+    printf("send data to server\n");
+    MakeJson();
+
+    // Serial.begin(112500);
+
+    // Serial.println("Arduino");
+    // fflush(stdout);
+    printf("123456789\n");
+    // TestSimpleFingerprinting();
 
     CheckCpuFreq();
-    ScanNetworks();
 
     // testDrawPixel();
 

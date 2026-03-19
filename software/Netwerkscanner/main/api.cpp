@@ -1,0 +1,185 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string>
+#include "cJSON.h"
+#include "esp_log.h"
+#include "esp_wifi.h"
+#include "esp_mac.h"
+#include "esp_timer.h"
+#include "esp_chip_info.h"
+#include "api.h"
+#include "esp_wifi.h"
+#include "esp_event.h"
+#include "nvs_flash.h"
+#include "esp_netif.h"
+
+// #include "main.cpp"
+
+static const char *LOGTAG = "API.CPP";
+void print_ap_info(const wifi_ap_record_t *ap)
+{
+    printf("SSID: %s\n", ap->ssid);
+    printf("BSSID: %02X:%02X:%02X:%02X:%02X:%02X\n",
+           ap->bssid[0], ap->bssid[1], ap->bssid[2],
+           ap->bssid[3], ap->bssid[4], ap->bssid[5]);
+    printf("Primary Channel: %d\n", ap->primary);
+    printf("Secondary Channel: %d\n", ap->second);
+    printf("RSSI: %d\n", ap->rssi);
+    printf("Auth Mode: %d\n", ap->authmode);
+    printf("Pairwise Cipher: %d\n", ap->pairwise_cipher);
+    printf("Group Cipher: %d\n", ap->group_cipher);
+    printf("Antenna: %d\n", ap->ant);
+    printf("PHY Modes: 11b=%d, 11g=%d, 11n=%d, 11a=%d, 11ac=%d, 11ax=%d, LR=%d\n",
+           ap->phy_11b, ap->phy_11g, ap->phy_11n, ap->phy_11a, ap->phy_11ac, ap->phy_11ax, ap->phy_lr);
+    printf("WPS: %d, FTM Responder: %d, FTM Initiator: %d\n",
+           ap->wps, ap->ftm_responder, ap->ftm_initiator);
+    printf("Bandwidth: %d, VHT freq1: %d, VHT freq2: %d\n",
+           ap->bandwidth, ap->vht_ch_freq1, ap->vht_ch_freq2);
+    // Country info
+    printf("Country: %c%c%c\n", ap->country.cc[0], ap->country.cc[1], ap->country.cc[2]);
+    printf("------------------------------------------------\n");
+}
+std::string getChipName()
+{
+    esp_chip_info_t info;
+    esp_chip_info(&info);
+
+    if (info.model == CHIP_ESP32)
+        return "ESP32";
+    if (info.model == CHIP_ESP32S2)
+        return "ESP32-S2";
+    if (info.model == CHIP_ESP32S3)
+        return "ESP32-S3";
+    if (info.model == CHIP_ESP32C3)
+        return "ESP32-C3";
+    if (info.model == CHIP_ESP32H2)
+        return "ESP32-H2";
+    if (info.model == CHIP_ESP32C2)
+        return "ESP32-C2";
+    if (info.model == CHIP_ESP32C5)
+        return "ESP32-C5";
+    return "???";
+}
+const char *GetId()
+{
+    std::string chipName = getChipName();
+    uint8_t mac[6];
+    esp_efuse_mac_get_default(mac);
+
+    static char buffer[32];
+    sprintf(buffer, "%s_%02X%02X", chipName.c_str(), mac[4], mac[5]);
+    return buffer;
+}
+
+char *CreateJson(wifi_ap_record_t *aps, int count, int64_t TimeStart, int64_t TimeEnd, int32_t x = 0, int32_t y = 0)
+{
+    cJSON *root = cJSON_CreateObject();
+    print_ap_info(&aps[1]);
+
+    if (root == NULL)
+    {
+        ESP_LOGI(LOGTAG, "Failed to create JSON root");
+        return NULL;
+    }
+
+    cJSON_AddStringToObject(root, "device_id", GetId());
+    cJSON_AddNumberToObject(root, "scan_time_start", TimeStart);
+    cJSON_AddNumberToObject(root, "scan_time_end", TimeEnd);
+    cJSON_AddNumberToObject(root, "x", x);
+    cJSON_AddNumberToObject(root, "y", y);
+
+    cJSON *networks = cJSON_CreateArray();
+    int i = 1;
+    cJSON *network1 = cJSON_CreateObject();
+    cJSON_AddStringToObject(network1, "ssid", (const char *)aps[i].ssid);
+    char bssid_str[18];
+    sprintf(bssid_str, "%02X:%02X:%02X:%02X:%02X:%02X",
+            aps[i].bssid[0],
+            aps[i].bssid[1],
+            aps[i].bssid[2],
+            aps[i].bssid[3],
+            aps[i].bssid[4],
+            aps[i].bssid[5]);
+
+    cJSON_AddStringToObject(network1, "bssid", bssid_str);
+    cJSON_AddNumberToObject(network1, "primary_channel", aps[i].primary);
+    cJSON_AddNumberToObject(network1, "secondary_channel", aps[i].second);
+    cJSON_AddNumberToObject(network1, "rssi", aps[i].rssi);
+    cJSON_AddNumberToObject(network1, "auth_mode", aps[i].authmode);
+    cJSON_AddNumberToObject(network1, "pairwise_cipher", aps[i].pairwise_cipher);
+    cJSON_AddNumberToObject(network1, "group_cipher", aps[i].group_cipher);
+    cJSON_AddNumberToObject(network1, "antenna", aps[i].ant);
+    cJSON_AddNumberToObject(network1, "phy_modes_11b", aps[i].phy_11a);
+    cJSON_AddNumberToObject(network1, "phy_modes_11g", aps[i].phy_11g);
+    cJSON_AddNumberToObject(network1, "phy_modes_11n", aps[i].phy_11n);
+    cJSON_AddNumberToObject(network1, "phy_modes_11a", aps[i].phy_11a);
+    cJSON_AddNumberToObject(network1, "phy_modes_11ac", aps[i].phy_11ac);
+    cJSON_AddNumberToObject(network1, "phy_modes_11ax", aps[i].phy_11ax);
+    cJSON_AddNumberToObject(network1, "phy_modes_lr", aps[i].phy_lr);
+    cJSON_AddNumberToObject(network1, "wps", aps[i].wps);
+    cJSON_AddNumberToObject(network1, "ftm_responder", aps[i].ftm_responder);
+    cJSON_AddNumberToObject(network1, "ftm_initiator", aps[i].ftm_initiator);
+    cJSON_AddNumberToObject(network1, "bandwidth", aps[i].bandwidth);
+    cJSON_AddNumberToObject(network1, "vht_freq1", aps[i].vht_ch_freq1);
+    cJSON_AddNumberToObject(network1, "vht_freq2", aps[i].vht_ch_freq2);
+    cJSON_AddNumberToObject(network1, "he_ap_bss_color", aps[i].he_ap.bss_color);                   /**< The BSS Color value associated with the AP's corresponding BSS */
+    cJSON_AddNumberToObject(network1, "he_ap_partial_bss_color", aps[i].he_ap.bss_color);           /**< Indicates whether an AID assignment rule is based on the BSS color */
+    cJSON_AddNumberToObject(network1, "he_ap_bss_color_disabled", aps[i].he_ap.bss_color_disabled); /**< Indicates whether the BSS color usage is disabled */
+    cJSON_AddNumberToObject(network1, "he_ap_bssid_index", aps[i].he_ap.bssid_index);               /**< In a M-BSSID set, identifies the non-transmitted BSSID */
+    cJSON_AddNumberToObject(network1, "reserved", aps[i].reserved);
+    char countryCode[4];
+    memcpy(countryCode, aps[i].country.cc, 3);
+    countryCode[3] = '\0';
+    cJSON_AddStringToObject(network1, "country", (const char *)countryCode);
+
+    cJSON_AddItemToArray(networks, network1);
+
+    cJSON_AddItemToObject(root, "networks", networks);
+
+    char *json_string = cJSON_Print(root);
+
+    cJSON_Delete(root);
+    printf(json_string);
+
+    return json_string;
+}
+
+// wil je json data lezen -> zoek: json parsen
+
+void TestJson(wifi_ap_record_t *aps)
+{
+    ESP_LOGI(LOGTAG, "Creating JSON...");
+
+    int64_t startTime = esp_timer_get_time();
+    int64_t endTime = esp_timer_get_time();
+
+    print_ap_info(aps);
+    char *json_data = CreateJson(aps, 10, startTime, endTime);
+
+    if (json_data == NULL)
+        return;
+
+    ESP_LOGI(LOGTAG, "Generated JSON:");
+    printf("%s\n", json_data);
+
+    free(json_data);
+}
+
+char *MakeJson()
+{
+    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+    esp_wifi_init(&cfg);
+    esp_wifi_set_mode(WIFI_MODE_STA);
+    esp_wifi_start();
+
+    esp_wifi_scan_start(NULL, true);
+    uint16_t n = 10;
+    wifi_ap_record_t aps[10];
+    esp_wifi_scan_get_ap_records(&n, aps);
+
+    int64_t startTime = esp_timer_get_time();
+    int64_t endTime = esp_timer_get_time();
+    char *json_data = CreateJson(aps, n, startTime, endTime);
+    printf("%s\n", json_data);
+    return json_data;
+}
