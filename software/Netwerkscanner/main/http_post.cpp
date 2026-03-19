@@ -9,10 +9,10 @@ void SendJsonPost(const String &payload, const char *serverUrl)
         return;
     }
 
-    WiFiClient client; // BELANGRIJK: geen Secure client!
+    WiFiClient client;
     HTTPClient http;
 
-    http.begin(client, serverUrl); // <-- deze lijn is de fix
+    http.begin(client, serverUrl);
     http.addHeader("Content-Type", "application/json");
 
     int httpResponseCode = http.POST(payload);

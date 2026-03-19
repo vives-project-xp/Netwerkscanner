@@ -13,10 +13,9 @@
 #include "nvs_flash.h"
 #include "esp_netif.h"
 
-// #include "main.cpp"
-
 static const char *LOGTAG = "API.CPP";
-void print_ap_info(const wifi_ap_record_t *ap)
+
+void PrintApInfo(const wifi_ap_record_t *ap) // data van 1 ap
 {
     printf("SSID: %s\n", ap->ssid);
     printf("BSSID: %02X:%02X:%02X:%02X:%02X:%02X\n",
@@ -39,7 +38,8 @@ void print_ap_info(const wifi_ap_record_t *ap)
     printf("Country: %c%c%c\n", ap->country.cc[0], ap->country.cc[1], ap->country.cc[2]);
     printf("------------------------------------------------\n");
 }
-std::string getChipName()
+
+std::string GetChipName()
 {
     esp_chip_info_t info;
     esp_chip_info(&info);
@@ -60,9 +60,9 @@ std::string getChipName()
         return "ESP32-C5";
     return "???";
 }
-const char *GetId()
+const char *GetChipId()
 {
-    std::string chipName = getChipName();
+    std::string chipName = GetChipName();
     uint8_t mac[6];
     esp_efuse_mac_get_default(mac);
 
@@ -74,7 +74,7 @@ const char *GetId()
 char *CreateJson(wifi_ap_record_t *aps, int count, int64_t TimeStart, int64_t TimeEnd, int32_t x = 0, int32_t y = 0)
 {
     cJSON *root = cJSON_CreateObject();
-    print_ap_info(&aps[1]);
+    PrintApInfo(&aps[1]);
 
     if (root == NULL)
     {
@@ -82,7 +82,7 @@ char *CreateJson(wifi_ap_record_t *aps, int count, int64_t TimeStart, int64_t Ti
         return NULL;
     }
 
-    cJSON_AddStringToObject(root, "device_id", GetId());
+    cJSON_AddStringToObject(root, "device_id", GetChipId());
     cJSON_AddNumberToObject(root, "scan_time_start", TimeStart);
     cJSON_AddNumberToObject(root, "scan_time_end", TimeEnd);
     cJSON_AddNumberToObject(root, "x", x);
@@ -146,24 +146,6 @@ char *CreateJson(wifi_ap_record_t *aps, int count, int64_t TimeStart, int64_t Ti
 
 // wil je json data lezen -> zoek: json parsen
 
-void TestJson(wifi_ap_record_t *aps)
-{
-    ESP_LOGI(LOGTAG, "Creating JSON...");
-
-    int64_t startTime = esp_timer_get_time();
-    int64_t endTime = esp_timer_get_time();
-
-    print_ap_info(aps);
-    char *json_data = CreateJson(aps, 10, startTime, endTime);
-
-    if (json_data == NULL)
-        return;
-
-    ESP_LOGI(LOGTAG, "Generated JSON:");
-    printf("%s\n", json_data);
-
-    free(json_data);
-}
 
 char *MakeJson()
 {
@@ -179,7 +161,15 @@ char *MakeJson()
 
     int64_t startTime = esp_timer_get_time();
     int64_t endTime = esp_timer_get_time();
+
+    ESP_LOGI(LOGTAG, "Creating JSON...");
     char *json_data = CreateJson(aps, n, startTime, endTime);
+
+    if (json_data == NULL)
+        return;
+
+    ESP_LOGI(LOGTAG, "Generated JSON:");
+
     printf("%s\n", json_data);
     return json_data;
 }

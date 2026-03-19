@@ -20,7 +20,7 @@ spi_device_handle_t spi;
 
 
 // Sends a command to the ST7789
-static void lcd_cmd(const uint8_t cmd) {
+static void LcdCommand(const uint8_t cmd) {
     gpio_set_level(PIN_NUM_DC, 0);
     spi_transaction_t t = {};
     t.length = 8;
@@ -29,7 +29,7 @@ static void lcd_cmd(const uint8_t cmd) {
 }
 
 // Sends data to the ST7789
-static void lcd_data(const uint8_t *data, int len) {
+static void LcdData(const uint8_t *data, int len) {
     if (len == 0) return;
     gpio_set_level(PIN_NUM_DC, 1);
     spi_transaction_t t = {};
@@ -37,28 +37,28 @@ static void lcd_data(const uint8_t *data, int len) {
     t.tx_buffer = data;
     spi_device_polling_transmit(spi, &t);
 }
-static void set_addr_window(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1)
+static void SetAddressWindow (uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1)
 {
     uint8_t data[4];
 
-    lcd_cmd(0x2A);
+    LcdCommand(0x2A);
     data[0] = x0 >> 8;
     data[1] = x0 & 0xFF;
     data[2] = x1 >> 8;
     data[3] = x1 & 0xFF;
-    lcd_data(data, 4);
+    LcdData(data, 4);
 
-    lcd_cmd(0x2B);
+    LcdCommand(0x2B);
     data[0] = y0 >> 8;
     data[1] = y0 & 0xFF;
     data[2] = y1 >> 8;
     data[3] = y1 & 0xFF;
-    lcd_data(data, 4);
+    LcdData(data, 4);
 
-    lcd_cmd(0x2C);
+    LcdCommand(0x2C);
 }
 // Clears the entire screen to a single color
-static void fill_screen(uint16_t color) {
+static void FillScreen(uint16_t color) {
     // 1. Prepare a buffer for one horizontal line to save RAM
     uint16_t *line_buffer = (uint16_t *)heap_caps_malloc(LCD_WIDTH * sizeof(uint16_t), MALLOC_CAP_DMA);
     uint16_t color_swapped = (color << 8) | (color >> 8); // ST7789 is Big-Endian
@@ -67,7 +67,7 @@ static void fill_screen(uint16_t color) {
         line_buffer[i] = color_swapped;
     }
 
-    set_addr_window(0, 0, LCD_WIDTH - 1, LCD_HEIGHT - 1);
+    SetAddressWindow(0, 0, LCD_WIDTH - 1, LCD_HEIGHT - 1);
     gpio_set_level(PIN_NUM_DC, 1);
 
     // 2. Send the screen data line-by-line instead of pixel-by-pixel
@@ -83,25 +83,25 @@ static void fill_screen(uint16_t color) {
 }
 
 // Sets the "active" drawing area to a single point (x, y)
-void draw_pixel(uint16_t x, uint16_t y, uint16_t color) {
+void DrawPixel(uint16_t x, uint16_t y, uint16_t color) {
     uint8_t data[4];
     
     // Column Address Set (0x2A)
-    lcd_cmd(0x2A);
+    LcdCommand(0x2A);
     data[0] = x >> 8; data[1] = x & 0xFF;
     data[2] = x >> 8; data[3] = x & 0xFF;
-    lcd_data(data, 4);
+    LcdData(data, 4);
 
     // Row Address Set (0x2B)
-    lcd_cmd(0x2B);
+    LcdCommand(0x2B);
     data[0] = y >> 8; data[1] = y & 0xFF;
     data[2] = y >> 8; data[3] = y & 0xFF;
-    lcd_data(data, 4);
+    LcdData(data, 4);
 
     // Write to RAM (0x2C)
-    lcd_cmd(0x2C);
+    LcdCommand(0x2C);
     uint8_t color_data[2] = { (uint8_t)(color >> 8), (uint8_t)(color & 0xFF) };
-    lcd_data(color_data, 2);
+    LcdData(color_data, 2);
 }
 void DrawLine(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint16_t color) {
     int dx = abs(x2 - x1);
@@ -111,7 +111,7 @@ void DrawLine(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint16_t color
     int err = dx + dy; // Error accumulation
 
     while (1) {
-        draw_pixel(x1, y1, color);
+        DrawPixel(x1, y1, color);
         if (x1 == x2 && y1 == y2) break;
         
         int e2 = 2 * err;
@@ -126,19 +126,19 @@ void DrawLine(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint16_t color
     }
 }
 
-void st7789_init() {
+void St7789Init() {
     // Reset display
     gpio_set_level(PIN_NUM_RST, 0);
     vTaskDelay(pdMS_TO_TICKS(100));
     gpio_set_level(PIN_NUM_RST, 1);
     vTaskDelay(pdMS_TO_TICKS(100));
 
-    lcd_cmd(0x11); // Sleep out
+    LcdCommand(0x11); // Sleep out
     vTaskDelay(pdMS_TO_TICKS(120));
-    lcd_cmd(0x3A); // Interface pixel format (16-bit)
+    LcdCommand(0x3A); // Interface pixel format (16-bit)
     uint8_t colmod = 0x55;
-    lcd_data(&colmod, 1);
-    lcd_cmd(0x29); // Display ON
+    LcdData(&colmod, 1);
+    LcdCommand(0x29); // Display ON
 }
 
 void ScreenTest(void) {
@@ -166,11 +166,11 @@ void ScreenTest(void) {
     spi_bus_add_device(LCD_HOST, &devcfg, &spi);
 
     gpio_set_level(PIN_NUM_BL, 1); // Turn on backlight
-    st7789_init();
+    St7789Init();
 
-    fill_screen(0xf700);
+    FillScreen(0xf700);
     // Draw one white pixel in the center
-    draw_pixel(120, 120, 0xFFFF);
+    DrawPixel(120, 120, 0xFFFF);
     
     for (int i = 0; i < 240; i+=10)
     {
