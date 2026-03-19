@@ -15,4 +15,3 @@ dependencies:
   #   # All dependencies of `main` are public by default.
   #   public: true
   espressif/arduino-esp32: ^3.3.7
-  fasani/adafruit_gfx: ^1.7.8

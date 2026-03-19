@@ -419,13 +419,6 @@ dependencies:
       registry_url: https://components.espressif.com
       type: service
     version: 1.4.6
-  fasani/adafruit_gfx:
-    component_hash: 8e1c83032d233ad8db4adc82209e1c7f89b9784513d7dd70bdc95260b3409135
-    dependencies: []
-    source:
-      registry_url: https://components.espressif.com/
-      type: service
-    version: 1.7.8
   idf:
     source:
       type: idf
@@ -442,8 +435,7 @@ dependencies:
     version: 1.20.4
 direct_dependencies:
 - espressif/arduino-esp32
-- fasani/adafruit_gfx
 - idf
-manifest_hash: f094fade8c2a89cd87c7c2e217874ff12013bd629d77363c4308e8f822cd4535
+manifest_hash: bb586ec925aec51fa9a2f4da694bbf1dd0c5ef5f4f654f1ef56d33c48f29627b
 target: esp32c5
 version: 2.0.0
