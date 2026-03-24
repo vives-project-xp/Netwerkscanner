@@ -1,0 +1,166 @@
+# test1 esp32
+
+resultaat
+```
+7 networks found
+Nr | SSID                             | RSSI |  | BSSID                    | CH | Encryption
+ 1 | Home sweet Home                  |  -80 |  | BSSID: AA:02:B8:6C:AA:D2 | 11 | WPA2
+ 2 | Orange-c7697                     |  -92 |  | BSSID: AA:6A:0A:2C:AA:9B |  1 | WPA2
+ 3 | JEAN                             |  -93 |  | BSSID: AA:24:72:4A:AA:C9 |  6 | WPA2
+ 4 | Proximus-Home-612796             |  -94 |  | BSSID: AA:05:95:FB:AA:61 |  6 | WPA2
+ 5 | Proximus-Home-832025             |  -95 |  | BSSID: AA:E3:1A:CD:AA:04 |  6 | WPA2
+ 6 | Proximus-Home-775089             |  -96 |  | BSSID: AA:B8:2B:8D:AA:E4 | 11 | WPA2+WPA3
+ 7 | Proximus-Home-D280               |  -97 |  | BSSID: AA:5D:9E:CB:AA:86 |  1 | WPA2
+
+```
+
+RSSI waarde veranderingen op stationaire locatie  
+min = -75  
+max = -80  
+
+Het aantal gevonden netwerken verschild veel gaat van min 2 tot soms 8 
+
+We kunnen deze problemen mogelijk verkleinen met een betere antenne.
+
+# test2 
+
+Door deze lijn code toe te voegen gaan de metingen beter.  ```WiFi.setSleep(false);  ```  
+
+Maakt RSSI veel nauwkeuriger  
+min = -78  
+max = -79  
+
+Gevonden netwerken nu tussen 6 en 8, een grote verbetering.  
+
+# test 3
+
+1. WiFi.scanNetworks(false, true, false, 80);
+
+resultaat  
+```
+gemiddelde voor 1 scan = 5395
+gemiddelde voor 1 scan = 5395
+gemiddelde voor 1 scan = 5395
+```
+
+2. ```WiFi.scanNetworks(false, true, true, 80);``` prob aan.  
+
+resultaat  
+```
+gemiddelde voor 1 scan = 1128
+gemiddelde voor 1 scan = 1128
+gemiddelde voor 1 scan = 1128
+gemiddelde voor 1 scan = 1128
+```
+
+478% sneller. Dit klop beter met de berekende tijd 14ch * 80ms = 1120.  
+Scantijden blijven ook heel consistent.
+
+
+op school ook dezelfde tijden  
+```
+gemiddelde voor 1 scan = 1129
+gemiddelde voor 1 scan = 1129
+gemiddelde voor 1 scan = 1129
+```
+
+test op school
+´´´
+Scan start
+Scan done
+28 networks found
+Nr | SSID                             | RSSI |  | BSSID                    | CH | Encryption
+ 1 | DIRECT-HC0S1EBB00701GOAD         |  -44 |  | BSSID: 11:BB:9E:95:AB:22 | 11 | WPA2
+ 2 | MPSK                             |  -59 |  | BSSID: 11:BA:25:4F:EB:22 | 11 | WPA2
+ 3 | eduroam                          |  -59 |  | BSSID: 11:BA:25:4F:EB:22 | 11 | WPA2-EAP
+ 4 | campusroam                       |  -59 |  | BSSID: 11:BA:25:4F:EB:22 | 11 | WPA2-EAP
+ 5 | VIVES-GUEST                      |  -59 |  | BSSID: 11:BA:25:4F:EB:22 | 11 | open
+ 6 |                                  |  -59 |  | BSSID: 11:BA:25:4F:EB:22 | 11 | WPA2
+ 7 | VIVES-EVENT                      |  -59 |  | BSSID: 11:BA:25:4F:EB:22 | 11 | open
+ 8 |                                  |  -59 |  | BSSID: 11:BA:25:4F:EB:22 | 11 | WPA2
+ 9 | devbit                           |  -60 |  | BSSID: 11:8B:A9:15:5F:22 |  1 | WPA2
+10 | iotlab                           |  -60 |  | BSSID: 11:8B:A9:15:5F:22 |  1 | WPA2
+11 | devbit                           |  -70 |  | BSSID: 11:8B:A9:15:60:22 |  6 | WPA2
+12 | iotlab                           |  -70 |  | BSSID: 11:8B:A9:15:60:22 |  6 | WPA2
+13 | campusroam                       |  -73 |  | BSSID: 11:BA:25:50:1B:22 |  1 | WPA2-EAP
+14 |                                  |  -73 |  | BSSID: 11:BA:25:50:1B:22 |  1 | WPA2
+15 |                                  |  -73 |  | BSSID: 11:BA:25:50:1B:22 |  1 | WPA2
+16 | eduroam                          |  -74 |  | BSSID: 11:BA:25:50:1B:22 |  1 | WPA2-EAP
+17 | MPSK                             |  -74 |  | BSSID: 11:BA:25:50:1B:22 |  1 | WPA2
+18 | VIVES-EVENT                      |  -74 |  | BSSID: 11:BA:25:50:1B:22 |  1 | open
+19 | Coco 🥥                         |  -77 |  | BSSID: 11:DD:00:4E:02:22|  6 | WPA2+WPA3
+20 | campusroam                       |  -83 |  | BSSID: 11:BA:25:50:27:22 | 11 | WPA2-EAP
+21 |                                  |  -84 |  | BSSID: 11:BA:25:50:27:22 | 11 | WPA2
+22 | VIVES-EVENT                      |  -84 |  | BSSID: 11:BA:25:50:27:22 | 11 | open
+23 |                                  |  -84 |  | BSSID: 11:BA:25:50:27:22 | 11 | WPA2
+24 | MPSK                             |  -84 |  | BSSID: 11:BA:25:50:27:22 | 11 | WPA2
+25 | eduroam                          |  -84 |  | BSSID: 11:BA:25:50:27:22 | 11 | WPA2-EAP
+26 | VIVES-GUEST                      |  -87 |  | BSSID: 11:BA:25:50:26:22 |  1 | open
+27 | MPSK                             |  -88 |  | BSSID: 11:BA:25:50:26:22 |  1 | WPA2
+28 | VIVES-EVENT                      |  -89 |  | BSSID: 11:BA:25:50:26:22 |  1 | open
+´´´
+
+Als we goed kijken zien we dat sommige netwerken een bijna identiek bssid hebben.
+Enkel de laatste waarde veranderd. 1 acces point heeft meerdere netwerken die hij uitstuurt.  
+
+Dit is belangrijk om te weten omdat als we triangulatie willen doen dat we niet met 3 dezelfde de positie proberen te bepalen.
+
+# test 4
+
+opstelling gemaakt met 3 esp8266 acces points.
+test van de Trilateratie geeft negatieve en foute waarden.  
+Door het ingeven van eigen waarden zie ik dat de formule werkt maar geeft negative waarden terug.
+De fouten waarden komen door de nog niet nauwkeurige afstand bepaling naar de ap's
+
+# test 5 
+esp hebben nu allemaal goede antennes, rssi waarden zijn nu gelijkaardig als ze op dezelfde plaats staan.  
+
+# test 6 
+positie bepaling werkt ongeveer, ap3 heeft een object in de weg waardoor hij denk verder te zijn waardoor de geschatte positie word weg geduwd in die richting. ![alt text](image.png) 
+
+# test 7
+ap verplaatst en obstakels zo veel mogelijk verminderd. mijn locatie is X=2 Y=2
+![alt text](image-1.png)
+
+# test 8 
+Met 4 ap gaat het al beter maar er moet nog aangepast worden dat korte afstanden meer doorwegen dan de lange. Naar mijn aanvoelen kan je de positie schatten in een straal van 5m van de echte locatie. personen in de ruimte verstoren ook de metingen. verschil meten met de ftm zal dat mogelijk verbeteren.
+![alt text](image-2.png)
+
+# idee
+de pcb antennen ontvangt niet uniform in alle richtingen.  
+wat als we nu de esp nu rap laten ronddraaien zodat het een gemiddelde word.
+
+# test 9
+De nieuwe positie berekening manier werkt stukken beter dan de vorige maar nog niet perfect. moest de antenne minder directioneel zijn vermoed ik dat het beter zou zijn.
+![alt text](image-3.png)
+
+# test 10
+Op school zelfde resultaat als thuis niet zo nauwkeurig
+![alt text](image-4.png) 
+
+
+# test 11
+simple fingerprinting.  
+werkt soms maar is voorlopig nog onnauwkeuriger dan de trilateratie.
+De fout was zit in het berkeden.
+Ik neem de som van het verschil tussen de huidige meting en de het datapunt.
+Maar as een datapunt niet veel netwerken overeenkomend heeft zal deze altijd de kleinste fout hebben en zal het denken daar te zijn.
+
+heb dit verbeterd door te delen door het aantal netwerken die de huidige locatie gevonden heeft.
+
+heb het nog verbeterd door een counter te zetten in de datapoint class die bijhoud hoeveel netwerken er nu echt meetellen
+
+# test 12
+gemiddelde van enkel de overeenkomstige netwerken is veelbelovend.
+tijdens de test in 3 ruimtes is het 3 van de 10 keer fout.
+door hetzelfde ruimte meerdere keren te scannen en toe te voegen aan de datapunten is het accurater in het voorspelen van de locatie
+
+Het zou een idee kunnen zijn om op elke fingerprint locatie een min en max en gemiddelde bij te houden per netwerk. en bij het bereken van de locatie dan procentueel de rssi fout verschillend te laten meetellen.
+
+# test 13
+Op school hetzelfde resultaat als thuis.
+
+# test 14 
+Succes!!! Door een logica fout in de code werd telkens een mac address niet gevonden werd stopte de loop met vergelijken voor alle volgende mac adressen. De oplossing was om enkel die ene over te slaan.  
+Momenteel kan het systeem de postie bepalen met een afstand van ongeveer 4 meter tussen de datapunten.
+
