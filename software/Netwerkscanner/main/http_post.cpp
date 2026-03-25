@@ -1,11 +1,14 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
+#include "esp_log.h"
+
+static const char *LOGTAG = "HTTP_POST.CPP";
 
 void SendJsonPost(const String &payload, const char *serverUrl)
 {
     if (WiFi.status() != WL_CONNECTED)
     {
-        Serial.println("WiFi niet verbonden!");
+        ESP_LOGI(LOGTAG,"Not connected to wifi\n");
         return;
     }
 
@@ -22,7 +25,7 @@ void SendJsonPost(const String &payload, const char *serverUrl)
         printf("Code: %d\n", httpResponseCode);
 
         String response = http.getString();
-        printf("Response: %s\n", response.c_str());
+        printf("Server response: %s\n", response.c_str());
     }
     else
     {
