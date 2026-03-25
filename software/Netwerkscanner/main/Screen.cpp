@@ -141,7 +141,7 @@ void St7789Init() {
     LcdCommand(0x29); // Display ON
 }
 
-void ScreenTest(void) {
+void GpioScreenSetup(){
     // SPI Bus Configuration
     spi_bus_config_t buscfg = {};
     buscfg.mosi_io_num = PIN_NUM_MOSI;
@@ -164,6 +164,10 @@ void ScreenTest(void) {
 
     spi_bus_initialize(LCD_HOST, &buscfg, SPI_DMA_CH_AUTO);
     spi_bus_add_device(LCD_HOST, &devcfg, &spi);
+}
+
+void ScreenTest(void) {
+    GpioScreenSetup();
 
     gpio_set_level(PIN_NUM_BL, 1); // Turn on backlight
     St7789Init();
