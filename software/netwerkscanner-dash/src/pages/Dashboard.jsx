@@ -28,7 +28,7 @@ export default function FloorVisionPro({ buildings = [] }) {
     if (imgRef.current) {
       setMapSize({
         width: imgRef.current.clientWidth,
-        height: imgRef.current.clientHeight
+        height: imgRef.current.clientHeight 
       });
     }
   };
