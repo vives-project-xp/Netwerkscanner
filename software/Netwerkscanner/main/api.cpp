@@ -71,10 +71,9 @@ const char *GetChipId()
     return buffer;
 }
 
-char *CreateJson(wifi_ap_record_t *aps, int count, int64_t TimeStart, int64_t TimeEnd, int32_t x = 0, int32_t y = 0)
+char *CreatWifiJson(wifi_ap_record_t *aps, uint16_t count, int64_t TimeStart, int64_t TimeEnd, int32_t x = 0, int32_t y = 0)
 {
     cJSON *root = cJSON_CreateObject();
-    PrintApInfo(&aps[1]);
 
     if (root == NULL)
     {
@@ -89,50 +88,54 @@ char *CreateJson(wifi_ap_record_t *aps, int count, int64_t TimeStart, int64_t Ti
     cJSON_AddNumberToObject(root, "y", y);
 
     cJSON *networks = cJSON_CreateArray();
-    int i = 1;
-    cJSON *network1 = cJSON_CreateObject();
-    cJSON_AddStringToObject(network1, "ssid", (const char *)aps[i].ssid);
-    char bssid_str[18];
-    sprintf(bssid_str, "%02X:%02X:%02X:%02X:%02X:%02X",
-            aps[i].bssid[0],
-            aps[i].bssid[1],
-            aps[i].bssid[2],
-            aps[i].bssid[3],
-            aps[i].bssid[4],
-            aps[i].bssid[5]);
+    for (uint16_t i = 0; i < count; i++)
+    {
+        cJSON *network1 = cJSON_CreateObject();
+        cJSON_AddStringToObject(network1, "ssid", (const char *)aps[i].ssid);
+        char bssid_str[18];
+        sprintf(bssid_str, "%02X:%02X:%02X:%02X:%02X:%02X",
+                aps[i].bssid[0],
+                aps[i].bssid[1],
+                aps[i].bssid[2],
+                aps[i].bssid[3],
+                aps[i].bssid[4],
+                aps[i].bssid[5]);
 
-    cJSON_AddStringToObject(network1, "bssid", bssid_str);
-    cJSON_AddNumberToObject(network1, "primary_channel", aps[i].primary);
-    cJSON_AddNumberToObject(network1, "secondary_channel", aps[i].second);
-    cJSON_AddNumberToObject(network1, "rssi", aps[i].rssi);
-    cJSON_AddNumberToObject(network1, "auth_mode", aps[i].authmode);
-    cJSON_AddNumberToObject(network1, "pairwise_cipher", aps[i].pairwise_cipher);
-    cJSON_AddNumberToObject(network1, "group_cipher", aps[i].group_cipher);
-    cJSON_AddNumberToObject(network1, "antenna", aps[i].ant);
-    cJSON_AddNumberToObject(network1, "phy_modes_11b", aps[i].phy_11a);
-    cJSON_AddNumberToObject(network1, "phy_modes_11g", aps[i].phy_11g);
-    cJSON_AddNumberToObject(network1, "phy_modes_11n", aps[i].phy_11n);
-    cJSON_AddNumberToObject(network1, "phy_modes_11a", aps[i].phy_11a);
-    cJSON_AddNumberToObject(network1, "phy_modes_11ac", aps[i].phy_11ac);
-    cJSON_AddNumberToObject(network1, "phy_modes_11ax", aps[i].phy_11ax);
-    cJSON_AddNumberToObject(network1, "phy_modes_lr", aps[i].phy_lr);
-    cJSON_AddNumberToObject(network1, "wps", aps[i].wps);
-    cJSON_AddNumberToObject(network1, "ftm_responder", aps[i].ftm_responder);
-    cJSON_AddNumberToObject(network1, "ftm_initiator", aps[i].ftm_initiator);
-    cJSON_AddNumberToObject(network1, "bandwidth", aps[i].bandwidth);
-    cJSON_AddNumberToObject(network1, "vht_freq1", aps[i].vht_ch_freq1);
-    cJSON_AddNumberToObject(network1, "vht_freq2", aps[i].vht_ch_freq2);
-    cJSON_AddNumberToObject(network1, "he_ap_bss_color", aps[i].he_ap.bss_color);                   /**< The BSS Color value associated with the AP's corresponding BSS */
-    cJSON_AddNumberToObject(network1, "he_ap_partial_bss_color", aps[i].he_ap.bss_color);           /**< Indicates whether an AID assignment rule is based on the BSS color */
-    cJSON_AddNumberToObject(network1, "he_ap_bss_color_disabled", aps[i].he_ap.bss_color_disabled); /**< Indicates whether the BSS color usage is disabled */
-    cJSON_AddNumberToObject(network1, "he_ap_bssid_index", aps[i].he_ap.bssid_index);               /**< In a M-BSSID set, identifies the non-transmitted BSSID */
-    cJSON_AddNumberToObject(network1, "reserved", aps[i].reserved);
-    char countryCode[4];
-    memcpy(countryCode, aps[i].country.cc, 3);
-    countryCode[3] = '\0';
-    cJSON_AddStringToObject(network1, "country", (const char *)countryCode);
+        cJSON_AddStringToObject(network1, "bssid", bssid_str);
+        cJSON_AddNumberToObject(network1, "primary_channel", aps[i].primary);
+        cJSON_AddNumberToObject(network1, "secondary_channel", aps[i].second);
+        cJSON_AddNumberToObject(network1, "rssi", aps[i].rssi);
+        cJSON_AddNumberToObject(network1, "auth_mode", aps[i].authmode);
+        cJSON_AddNumberToObject(network1, "pairwise_cipher", aps[i].pairwise_cipher);
+        cJSON_AddNumberToObject(network1, "group_cipher", aps[i].group_cipher);
+        cJSON_AddNumberToObject(network1, "antenna", aps[i].ant);
+        cJSON_AddNumberToObject(network1, "phy_modes_11b", aps[i].phy_11a);
+        cJSON_AddNumberToObject(network1, "phy_modes_11g", aps[i].phy_11g);
+        cJSON_AddNumberToObject(network1, "phy_modes_11n", aps[i].phy_11n);
+        cJSON_AddNumberToObject(network1, "phy_modes_11a", aps[i].phy_11a);
+        cJSON_AddNumberToObject(network1, "phy_modes_11ac", aps[i].phy_11ac);
+        cJSON_AddNumberToObject(network1, "phy_modes_11ax", aps[i].phy_11ax);
+        cJSON_AddNumberToObject(network1, "phy_modes_lr", aps[i].phy_lr);
+        cJSON_AddNumberToObject(network1, "wps", aps[i].wps);
+        cJSON_AddNumberToObject(network1, "ftm_responder", aps[i].ftm_responder);
+        cJSON_AddNumberToObject(network1, "ftm_initiator", aps[i].ftm_initiator);
+        cJSON_AddNumberToObject(network1, "bandwidth", aps[i].bandwidth);
+        cJSON_AddNumberToObject(network1, "vht_freq1", aps[i].vht_ch_freq1);
+        cJSON_AddNumberToObject(network1, "vht_freq2", aps[i].vht_ch_freq2);
+        cJSON_AddNumberToObject(network1, "he_ap_bss_color", aps[i].he_ap.bss_color);                   /**< The BSS Color value associated with the AP's corresponding BSS */
+        cJSON_AddNumberToObject(network1, "he_ap_partial_bss_color", aps[i].he_ap.bss_color);           /**< Indicates whether an AID assignment rule is based on the BSS color */
+        cJSON_AddNumberToObject(network1, "he_ap_bss_color_disabled", aps[i].he_ap.bss_color_disabled); /**< Indicates whether the BSS color usage is disabled */
+        cJSON_AddNumberToObject(network1, "he_ap_bssid_index", aps[i].he_ap.bssid_index);               /**< In a M-BSSID set, identifies the non-transmitted BSSID */
+        cJSON_AddNumberToObject(network1, "reserved", aps[i].reserved);
+        char countryCode[4];
+        countryCode[0]= aps[i].country.cc[0];
+        countryCode[1]= aps[i].country.cc[1];
+        countryCode[2]= aps[i].country.cc[2];
+        countryCode[3] = '\0';
+        cJSON_AddStringToObject(network1, "country", (const char *)countryCode);
 
-    cJSON_AddItemToArray(networks, network1);
+        cJSON_AddItemToArray(networks, network1);
+    }
 
     cJSON_AddItemToObject(root, "networks", networks);
 
@@ -146,8 +149,7 @@ char *CreateJson(wifi_ap_record_t *aps, int count, int64_t TimeStart, int64_t Ti
 
 // wil je json data lezen -> zoek: json parsen
 
-
-char *MakeJson()
+char *MakeWifiJson()
 {
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     esp_wifi_init(&cfg);
@@ -163,13 +165,90 @@ char *MakeJson()
     int64_t endTime = esp_timer_get_time();
 
     ESP_LOGI(LOGTAG, "Creating JSON...");
-    char *json_data = CreateJson(aps, n, startTime, endTime);
+    char *json_data = CreatWifiJson(aps, n, startTime, endTime);
 
     if (json_data == NULL)
-        return;
-
-    ESP_LOGI(LOGTAG, "Generated JSON:");
-
-    printf("%s\n", json_data);
+    {
+        ESP_LOGI(LOGTAG, "JSON not Generated");
+    }
+    else
+    {
+        ESP_LOGI(LOGTAG, "Generated JSON:");
+    }
     return json_data;
 }
+
+
+
+/*
+API POST example
+
+CreatWifiJson()
+{
+        "device_id":    "ESP32-C5_FFE8",
+        "scan_time_start":      10675583,
+        "scan_time_end":        10675585,
+        "x":    0,
+        "y":    0,
+        "networks":     [{
+                        "ssid": "Proximus-Home",
+                        "bssid":        "68:12:C8:6C:F1:D2",
+                        "primary_channel":      11,
+                        "secondary_channel":    0,
+                        "rssi": -82,
+                        "auth_mode":    3,
+                        "pairwise_cipher":      4,
+                        "group_cipher": 4,
+                        "antenna":      0,
+                        "phy_modes_11b":        0,
+                        "phy_modes_11g":        1,
+                        "phy_modes_11n":        1,
+                        "phy_modes_11a":        0,
+                        "phy_modes_11ac":       0,
+                        "phy_modes_11ax":       0,
+                        "phy_modes_lr": 0,
+                        "wps":  0,
+                        "ftm_responder":        0,
+                        "ftm_initiator":        0,
+                        "bandwidth":    1,
+                        "vht_freq1":    0,
+                        "vht_freq2":    0,
+                        "he_ap_bss_color":      0,
+                        "he_ap_partial_bss_color":      0,
+                        "he_ap_bss_color_disabled":     0,
+                        "he_ap_bssid_index":    0,
+                        "reserved":     0,
+                        "country":      "BE "
+                },{
+                        "ssid": "Proximus-Home",
+                        "bssid":        "68:12:C8:6C:F1:D3",
+                        "primary_channel":      52,
+                        "secondary_channel":    1,
+                        "rssi": -91,
+                        "auth_mode":    3,
+                        "pairwise_cipher":      4,
+                        "group_cipher": 4,
+                        "antenna":      0,
+                        "phy_modes_11b":        1,
+                        "phy_modes_11g":        0,
+                        "phy_modes_11n":        1,
+                        "phy_modes_11a":        1,
+                        "phy_modes_11ac":       1,
+                        "phy_modes_11ax":       1,
+                        "phy_modes_lr": 0,
+                        "wps":  1,
+                        "ftm_responder":        0,
+                        "ftm_initiator":        0,
+                        "bandwidth":    4,
+                        "vht_freq1":    58,
+                        "vht_freq2":    50,
+                        "he_ap_bss_color":      26,
+                        "he_ap_partial_bss_color":      26,
+                        "he_ap_bss_color_disabled":     0,
+                        "he_ap_bssid_index":    0,
+                        "reserved":     0,
+                        "country":      "BE\u0004"
+                }]
+}
+
+*/
