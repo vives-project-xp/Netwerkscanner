@@ -8,6 +8,8 @@
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "freertos/semphr.h"
+#include "driver/gpio.h"
 
 #include <Arduino.h>
 #include "screen.h"
@@ -18,6 +20,28 @@
 #include "api.h"
 #include "http_post.h"
 #include "wifi_key.h"
+
+static const char *LOGTAG = "MAIN.CPP";
+
+#define DEBOUNCE_DELAY 100000ULL      // 100ms
+#define GPIO_BUTTON_UP GPIO_NUM_5     // A4
+#define GPIO_BUTTON_DOWN GPIO_NUM_4   // A3
+#define GPIO_BUTTON_SELECT GPIO_NUM_2 // A1
+static volatile uint64_t lastIsrTimeUp = 0;
+static volatile uint64_t lastIsrTimeDown = 0;
+static volatile uint64_t lastIsrTimeSelect = 0;
+static volatile uint8_t buttonCountUp = 0;
+static volatile uint8_t buttonCountDown = 0;
+static volatile uint8_t buttonCountSelect = 0;
+
+typedef enum
+{
+    BUTTON_UP,
+    BUTTON_DOWN,
+    BUTTON_SELECT
+} ButtonEventT;
+
+static QueueHandle_t menuQueue;
 
 void ScanNetworks()
 {
@@ -50,6 +74,98 @@ void CheckCpuFreq()
     esp_clk_tree_src_get_freq_hz(SOC_MOD_CLK_CPU, ESP_CLK_TREE_SRC_FREQ_PRECISION_EXACT, &freq_hz);
     printf("CPU Clock: %lu Hz\n", freq_hz);
 }
+
+void MenuTask(void *pvParameters)
+{
+    ButtonEventT ontvangen_event;
+    int8_t menu_index = 0;
+
+    while (1)
+    {
+        // Wacht in ruststand tot er IETS in de brievenbus komt
+        if (xQueueReceive(menuQueue, &ontvangen_event, portMAX_DELAY))
+        {
+
+            if (ontvangen_event == BUTTON_UP)
+            {
+                menu_index++;
+                printf("Cursor omhoog naar: %d\n", menu_index);
+            }
+            else if (ontvangen_event == BUTTON_DOWN)
+            {
+                menu_index--;
+                printf("Cursor omlaag naar: %d\n", menu_index);
+            }
+            else if (ontvangen_event == BUTTON_SELECT)
+            {
+                printf("GEKOZEN: Je hebt item %d geselecteerd!\n", menu_index);
+                // Voer hier de actie uit die bij dit menu-item hoort
+            }
+        }
+    }
+}
+
+static void IRAM_ATTR buttonIsrUp(void *arg)
+{
+    uint64_t now = esp_timer_get_time();
+    if (now - lastIsrTimeUp > DEBOUNCE_DELAY)
+    {
+        ButtonEventT event = BUTTON_UP;
+        xQueueSendFromISR(menuQueue, &event, NULL);
+        lastIsrTimeUp = now;
+    }
+}
+
+static void IRAM_ATTR buttonIsrDown(void *arg)
+{
+    uint64_t now = esp_timer_get_time();
+    if (now - lastIsrTimeDown > DEBOUNCE_DELAY)
+    {
+        ButtonEventT event = BUTTON_DOWN;
+        xQueueSendFromISR(menuQueue, &event, NULL);
+        lastIsrTimeDown = now;
+    }
+}
+
+static void IRAM_ATTR buttonIsrSelect(void *arg)
+{
+    uint64_t now = esp_timer_get_time();
+    if (now - lastIsrTimeSelect > DEBOUNCE_DELAY)
+    {
+        ButtonEventT event = BUTTON_SELECT;
+        xQueueSendFromISR(menuQueue, &event, NULL);
+        lastIsrTimeSelect = now;
+    }
+}
+
+void CreatButtonInterrupts()
+{
+
+    menuQueue = xQueueCreate(10, sizeof(uint8_t));
+
+    gpio_config_t io_conf = {};
+    io_conf.intr_type = GPIO_INTR_NEGEDGE; // falling edge
+    io_conf.mode = GPIO_MODE_INPUT;
+    io_conf.pin_bit_mask = (1ULL << GPIO_BUTTON_UP) |
+                           (1ULL << GPIO_BUTTON_DOWN) |
+                           (1ULL << GPIO_BUTTON_SELECT);
+    io_conf.pull_down_en = GPIO_PULLDOWN_ENABLE;
+    io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
+    gpio_config(&io_conf);
+
+    gpio_install_isr_service(0);
+
+    gpio_isr_handler_add(GPIO_BUTTON_UP, buttonIsrUp, NULL);
+    gpio_isr_handler_add(GPIO_BUTTON_DOWN, buttonIsrDown, NULL);
+    gpio_isr_handler_add(GPIO_BUTTON_SELECT, buttonIsrSelect, NULL);
+}
+
+void GpioSetup()
+{
+    GpioScreenSetup();
+    CreatButtonInterrupts();
+}
+
 extern "C" void app_main(void)
 {
     initArduino();
@@ -57,40 +173,44 @@ extern "C" void app_main(void)
     printf("Build Date: %s\n", __DATE__);
     printf("Build Time: %s\n", __TIME__);
 
-    // 
+    GpioSetup();
+
+    xTaskCreate(
+        MenuTask,   // Naam van de functie
+        "MenuTask", // Naam voor debugging
+        4096,       // Stack size in bytes
+        NULL,       // Parameter die je mee wilt geven (optioneel)
+        5,          // Prioriteit (hoger getal = hogere prioriteit)
+        NULL        // Task handle (optioneel, om de task later aan te sturen)
+    );
+
+    while (1)
+    {
+        vTaskDelay(pdMS_TO_TICKS(10));
+    }
+    //
     // ScreenTest();
 
-    WiFi.begin(WIFI_SSID,WIFI_PASSWORD );
+    /*WiFi.begin(WIFI_SSID,WIFI_PASSWORD );
+
     while (WiFi.status() != WL_CONNECTED)
     {
         delay(500);
-        Serial.print(".");
-    }
+        ESP_LOGI("wifi connection", "not connected");
+    }*/
     const char *serverUrl = "http://10.20.10.24:8081/upload";
 
-    String payload(MakeJson());
-    SendJsonPost(payload, serverUrl);
+    String payload(MakeWifiJson());
+    // SendJsonPost(payload, serverUrl);
 
     printf("send data to server\n");
-    MakeJson();
+    // MakeJson();
 
-    ScanNetworks();
+    // ScanNetworks();
 
-    // Serial.println("Arduino");
-    // fflush(stdout);
-    printf("123456789\n");
     // TestSimpleFingerprinting();
 
     CheckCpuFreq();
 
     // testDrawPixel();
-
-    MyLed led;
-
-    while (true)
-    {
-        led.on();
-
-        led.off();
-    }
 }
