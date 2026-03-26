@@ -1,263 +1,208 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
-import { Wifi, X, Plus, Cpu, Trash2, Layers} from 'lucide-react';
+import { Wifi, Ruler, MapPin, Grid3X3, Database } from 'lucide-react';
 
-export default function NetwerkscannerDash({ buildings = [] }) {
-  const [scans, setScans] = useState([]);
-  const [loading, setLoading] = useState(false);
+export default function FloorVisionPro({ buildings = [] }) {
+  // --- STATES ---
+  const [scans, setScans] = useState([]); // De live data uit de database
   const [selectedBuildingId, setSelectedBuildingId] = useState('');
   const [selectedFloorId, setSelectedFloorId] = useState('');
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [editingAp, setEditingAp] = useState(null);
-  const [showFloorConfig, setShowFloorConfig] = useState(false);
+  const [isCalibrating, setIsCalibrating] = useState(false);
+  const [showGrid, setShowGrid] = useState(true);
+  const [userLocation, setUserLocation] = useState(null); // Het 0,0 punt in %
+  const [mapSize, setMapSize] = useState({ width: 0, height: 0 });
+  const [rulerPoints, setRulerPoints] = useState([]);
+  const [ppm, setPpm] = useState(() => JSON.parse(localStorage.getItem('fv_ppm_config') || '{}'));
 
-  const [accessPoints, setAccessPoints] = useState(() => {
-    const saved = localStorage.getItem('fv_ap_config');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [floorScannerMapping, setFloorScannerMapping] = useState(() => {
-    const saved = localStorage.getItem('fv_floor_esp_config');
-    return saved ? JSON.parse(saved) : {};
-  });
-
-  const imgRef = useRef(null);
-
+  // --- FETCH LIVE SCAN DATA (De data die je in je console zag) ---
   useEffect(() => {
-    localStorage.setItem('fv_ap_config', JSON.stringify(accessPoints));
-    localStorage.setItem('fv_floor_esp_config', JSON.stringify(floorScannerMapping));
-  }, [accessPoints, floorScannerMapping]);
-
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch('/api/scans');
-      const data = await res.json();
-      console.log("--- RAW DATABASE DATA ---");
-      console.table(data);
-      const validData = (Array.isArray(data) ? data : []).filter(item => item.device_id);
-      setScans(validData);
-    } catch (e) { 
-      console.error("API Error:", e); 
-    } finally { 
-      setLoading(false); 
-    }
-  };
-
-  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await fetch('/api/scans');
+        const data = await res.json();
+        // We loggen dit om te bevestigen dat de data er is
+        console.log("📡 LIVE DATA BINNEN:", data);
+        setScans(Array.isArray(data) ? data : []);
+      } catch (e) { 
+        console.error("Fetch error:", e); 
+      }
+    };
     fetchData();
-    const interval = setInterval(fetchData, 5000);
+    const interval = setInterval(fetchData, 3000);
     return () => clearInterval(interval);
   }, []);
 
-  const linkedDeviceId = useMemo(() => {
-    return floorScannerMapping[selectedFloorId] || "";
-  }, [floorScannerMapping, selectedFloorId]);
-
-  const floorSpecificScans = useMemo(() => {
-    if (!linkedDeviceId) return [];
-    return scans.filter(s => s.device_id === linkedDeviceId);
-  }, [scans, linkedDeviceId]);
-
-  const mappedAPs = useMemo(() => {
-    return accessPoints
-      .filter(ap => ap.floorId === selectedFloorId)
-      .map(ap => {
-        const liveData = floorSpecificScans.filter(s => 
-          ap.assignedBssids.some(b => b === s.bssid)
-        );
-        const strongestRssi = liveData.length > 0 ? Math.max(...liveData.map(l => l.rssi)) : -100;
-        return { 
-          ...ap, 
-          status: liveData.length > 0 ? 'online' : 'offline', 
-          rssi: strongestRssi,
-          activeSignals: liveData 
-        };
-      });
-  }, [floorSpecificScans, accessPoints, selectedFloorId]);
-
+  // --- SELECTIE LOGICA ---
   const currentBuilding = buildings.find(b => String(b.id) === String(selectedBuildingId));
   const currentFloor = currentBuilding?.floors?.find(f => String(f.id) === String(selectedFloorId));
+  const currentPpmValue = ppm[selectedFloorId] || 0;
+
+  // --- BEREKENING: POSITIES OP DE KAART ---
+  const positionedPoints = useMemo(() => {
+    // We gebruiken de 'scans' state omdat 'currentFloor.access_points' leeg is in je console
+    if (!userLocation || !currentPpmValue || mapSize.width === 0 || scans.length === 0) {
+      return [];
+    }
+
+    return scans.map((ap, index) => {
+      // LOGICA: Elke scan 3 meter onder de vorige op de Y-as
+      const xMeter = 0; 
+      const yMeter = index * 3; 
+
+      // Omrekenen van meters naar pixels op basis van de kalibratie (PPM)
+      const offsetPixelsX = xMeter * currentPpmValue;
+      const offsetPixelsY = yMeter * currentPpmValue;
+
+      // Omrekenen naar % van de kaart om correct te tekenen
+      const offsetPercentX = (offsetPixelsX / mapSize.width) * 100;
+      const offsetPercentY = (offsetPixelsY / mapSize.height) * 100;
+
+      return {
+        ...ap,
+        renderX: userLocation.x + offsetPercentX,
+        renderY: userLocation.y + offsetPercentY,
+        distance: yMeter.toFixed(2)
+      };
+    });
+  }, [scans, userLocation, currentPpmValue, mapSize]);
+
+  // --- HANDLERS ---
+  const handleImageLoad = (e) => {
+    setMapSize({ width: e.target.offsetWidth, height: e.target.offsetHeight });
+  };
+
+  const handleMapClick = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+    if (isCalibrating) {
+      setRulerPoints(prev => prev.length >= 2 ? [{x, y}] : [...prev, {x, y}]);
+    } else {
+      setUserLocation({x, y});
+      console.log("0,0 punt gezet op:", x.toFixed(2), "%", y.toFixed(2), "%");
+    }
+  };
 
   return (
-    <div className="flex h-screen bg-[#020617] text-slate-300 overflow-hidden font-sans">
+    <div className="flex h-screen bg-[#020617] text-slate-300 font-sans overflow-hidden">
+      
       {/* SIDEBAR */}
       <div className="w-80 bg-[#0f172a] border-r border-white/5 flex flex-col z-50 shadow-2xl">
         <div className="p-6 border-b border-white/5 space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="bg-blue-600 p-2 rounded-xl text-white shadow-lg"><Layers size={20} /></div>
-            <h1 className="font-black uppercase tracking-tighter text-white text-xl italic">Controls</h1>
+          <div className="flex items-center gap-2 mb-2">
+            <Database size={16} className="text-blue-500" />
+            <h2 className="text-xs font-black text-white uppercase tracking-widest text-blue-400">Grid Mapper Pro</h2>
           </div>
           
-          <div className="flex bg-black/40 p-1 rounded-xl border border-white/5">
-            <button onClick={() => {setIsEditMode(false); setShowFloorConfig(false);}} className={`flex-1 py-2 rounded-lg text-[10px] font-black uppercase transition-all ${!isEditMode && !showFloorConfig ? 'bg-blue-600 text-white' : 'text-slate-500'}`}>Monitor</button>
-            <button onClick={() => {setIsEditMode(true); setShowFloorConfig(false);}} className={`flex-1 py-2 rounded-lg text-[10px] font-black uppercase transition-all ${isEditMode ? 'bg-amber-500 text-black' : 'text-slate-500'}`}>Punten</button>
-            <button onClick={() => {setShowFloorConfig(true); setIsEditMode(false);}} className={`flex-1 py-2 rounded-lg text-[10px] font-black uppercase transition-all ${showFloorConfig ? 'bg-indigo-600 text-white' : 'text-slate-500'}`}>ESP Link</button>
+          <select value={selectedBuildingId} onChange={(e) => setSelectedBuildingId(e.target.value)} className="w-full bg-[#1e293b] border-white/10 rounded-xl px-4 py-3 text-xs text-white outline-none">
+             <option value="">Selecteer Project...</option>
+             {buildings.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+          </select>
+          <select value={selectedFloorId} onChange={(e) => {setSelectedFloorId(e.target.value); setUserLocation(null);}} className="w-full bg-[#1e293b] border-white/10 rounded-xl px-4 py-3 text-xs text-white outline-none">
+             <option value="">Selecteer Verdieping...</option>
+             {currentBuilding?.floors?.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+          </select>
+
+          <div className="flex gap-2">
+            <button onClick={() => setIsCalibrating(!isCalibrating)} className={`flex-1 py-2 rounded-lg text-[9px] font-bold border transition-all ${isCalibrating ? 'bg-emerald-600 border-emerald-400 text-white' : 'bg-white/5 border-white/10'}`}>SCHAAL</button>
+            <button onClick={() => setShowGrid(!showGrid)} className={`flex-1 py-2 rounded-lg text-[9px] font-bold border transition-all ${showGrid ? 'bg-blue-600 border-blue-400 text-white' : 'bg-white/5 border-white/10'}`}>GRID</button>
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-6">
-          <div className="space-y-2 px-2">
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Verdieping Selectie</label>
-            <select value={selectedBuildingId} onChange={(e) => {setSelectedBuildingId(e.target.value); setSelectedFloorId('');}} className="w-full bg-[#1e293b] border border-white/10 rounded-xl px-4 py-3 text-xs font-bold text-white outline-none">
-               <option value="">Kies Project...</option>
-               {buildings.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
-            </select>
-            <select disabled={!selectedBuildingId} value={selectedFloorId} onChange={(e) => setSelectedFloorId(e.target.value)} className="w-full bg-[#1e293b] border border-white/10 rounded-xl px-4 py-3 text-xs font-bold text-white outline-none">
-               <option value="">Kies Verdieping...</option>
-               {currentBuilding?.floors?.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
-            </select>
-          </div>
-
-          {showFloorConfig && selectedFloorId && (
-            <div className="p-4 bg-indigo-600/10 border border-indigo-500/20 rounded-2xl space-y-4 animate-in fade-in duration-300">
-               <h3 className="text-xs font-black text-white uppercase flex items-center gap-2 italic"><Cpu size={14}/> ESP Koppelen</h3>
-               <div className="space-y-2">
-                  <select 
-                    value={linkedDeviceId}
-                    onChange={(e) => setFloorScannerMapping(prev => ({...prev, [selectedFloorId]: e.target.value}))}
-                    className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-blue-400 font-mono outline-none"
-                  >
-                    <option value="">-- Geen ESP geselecteerd --</option>
-                    {[...new Set(scans.map(s => s.device_id))].filter(Boolean).map(id => (
-                      <option key={id} value={id}>{id}</option>
-                    ))}
-                  </select>
-               </div>
-            </div>
-          )}
-
-          {!showFloorConfig && (
-            <div className="space-y-2">
-              <h2 className="text-[10px] font-black text-slate-500 uppercase px-2 tracking-widest italic">Live Status</h2>
-              {mappedAPs.map((ap) => (
-                <div key={ap.id} onClick={() => isEditMode && setEditingAp(ap)} className={`p-4 rounded-2xl border transition-all ${editingAp?.id === ap.id ? 'bg-blue-600/20 border-blue-500' : 'bg-white/5 border-white/5'}`}>
-                  <div className="flex justify-between items-center">
-                    <span className="font-bold text-sm text-white">{ap.name}</span>
-                    <div className={`w-2 h-2 rounded-full ${ap.status === 'online' ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]' : 'bg-slate-700'}`} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+        <div className="flex-1 overflow-y-auto p-4 space-y-2">
+           {userLocation ? (
+             <div className="space-y-2">
+               <h3 className="text-[10px] font-black text-blue-400 uppercase px-2">Gevonden Scans</h3>
+               {positionedPoints.map((ap, i) => (
+                 <div key={i} className="p-3 bg-white/5 rounded-xl border border-white/5 flex justify-between items-center text-[10px]">
+                    <span className="font-bold text-slate-200">{ap.bssid || "Onbekend"}</span>
+                    <span className="font-mono text-blue-400">{ap.distance}m</span>
+                 </div>
+               ))}
+               <button onClick={() => setUserLocation(null)} className="w-full py-2 text-[9px] text-rose-500 font-bold uppercase mt-4">Reset Oorsprong</button>
+             </div>
+           ) : (
+             <div className="text-center p-8 border border-dashed border-white/10 rounded-2xl text-[10px] text-slate-500 uppercase">
+               Klik op de kaart voor 0,0 punt
+             </div>
+           )}
         </div>
       </div>
 
-      {/* MAP CANVAS */}
-      <div className="flex-1 relative bg-[#f1f5f9] flex items-center justify-center p-8 overflow-hidden fv-map-canvas">
-        {loading && (
-          <div className="fv-loading-overlay fv-loading-overlay-local" />
-        )}
+      {/* MAIN VIEW */}
+      <div className="flex-1 relative bg-[#020617] flex items-center justify-center p-8 overflow-hidden">
         {currentFloor ? (
-          <TransformWrapper disabled={isEditMode} centerOnInit>
+          <TransformWrapper disabled={isCalibrating} centerOnInit>
             <TransformComponent wrapperStyle={{ width: "100%", height: "100%" }}>
-              <div className="relative inline-block bg-white shadow-2xl" onClick={(e) => {
-                if (!isEditMode || !imgRef.current || editingAp) return;
-                const rect = imgRef.current.getBoundingClientRect();
-                const x = parseFloat(((e.clientX - rect.left) / rect.width * 100).toFixed(2));
-                const y = parseFloat(((e.clientY - rect.top) / rect.height * 100).toFixed(2));
-                const newAp = { id: `ap_${Date.now()}`, name: "Nieuw Punt", x, y, assignedBssids: [], floorId: selectedFloorId };
-                setAccessPoints(prev => [...prev, newAp]);
-                setEditingAp(newAp);
-              }}>
-                <img ref={imgRef} src={currentFloor.image} alt="Floorplan" className="h-[85vh] w-auto block pointer-events-none" />
-                <div className="absolute inset-0 pointer-events-none">
-                  {mappedAPs.map((ap) => (
-                    <div 
-                      key={ap.id} 
-                      className={`absolute pointer-events-auto transition-all cursor-pointer group ${editingAp?.id === ap.id ? 'z-[100]' : 'z-20'}`} 
-                      style={{ left: `${ap.x}%`, top: `${ap.y}%`, transform: 'translate(-50%, -50%)' }} 
-                      onClick={(e) => { e.stopPropagation(); isEditMode && setEditingAp(ap); }}
-                    >
-                      {/* AP ICON */}
-                      <div className={`w-12 h-12 rounded-2xl border-4 flex items-center justify-center shadow-2xl transition-all ${
-                        editingAp?.id === ap.id ? 'bg-amber-500 border-white scale-125' : 
-                        ap.status === 'online' ? 'bg-[#0f172a] border-blue-500 hover:scale-110' : 'bg-slate-300 border-white opacity-40'
-                      }`}>
-                        <Wifi size={20} className={ap.status === 'online' ? 'text-blue-400' : 'text-slate-600'} />
-                      </div>
+              <div className="relative inline-block bg-[#0f172a] shadow-2xl" onClick={handleMapClick}>
+                <img src={currentFloor.image} alt="Map" onLoad={handleImageLoad} className="h-[85vh] w-auto block pointer-events-none" />
+                
+                {/* GRID */}
+                {showGrid && currentPpmValue > 0 && userLocation && (
+                  <div className="absolute inset-0 pointer-events-none opacity-20" 
+                    style={{ 
+                      backgroundImage: `linear-gradient(to right, #6366f1 1px, transparent 1px), linear-gradient(to bottom, #6366f1 1px, transparent 1px)`,
+                      backgroundSize: `${currentPpmValue}px ${currentPpmValue}px`,
+                      backgroundPosition: `${(userLocation.x / 100) * mapSize.width}px ${(userLocation.y / 100) * mapSize.height}px`
+                    }} 
+                  />
+                )}
 
-                      {/* HOVER TOOLTIP (Alleen in Monitor mode) */}
-                      {!isEditMode && (
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-56 bg-[#0f172a] border border-white/10 rounded-xl p-3 shadow-2xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all translate-y-2 group-hover:translate-y-0 z-[500]">
-                          <div className="flex justify-between items-start mb-2 border-b border-white/5 pb-2">
-                            <span className="text-[10px] font-black text-white uppercase truncate pr-2">{ap.name}</span>
-                            <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded ${ap.status === 'online' ? 'bg-emerald-500/20 text-emerald-500' : 'bg-slate-800 text-slate-500'}`}>
-                              {ap.status === 'online' ? `${ap.rssi}dBm` : 'OFFLINE'}
-                            </span>
-                          </div>
-                          
-                          {ap.status === 'online' && ap.activeSignals?.length > 0 ? (
-                            <div className="space-y-1.5">
-                              <p className="text-[8px] text-slate-500 uppercase font-bold tracking-widest">Gevonden netwerken:</p>
-                              {ap.activeSignals.map((scan, idx) => (
-                                <div key={idx} className="flex justify-between items-center bg-white/5 p-1 rounded">
-                                  <div className="flex flex-col overflow-hidden">
-                                    <span className="text-[9px] text-blue-400 font-bold truncate leading-none">{scan.ssid}</span>
-                                    <span className="text-[7px] text-slate-500 font-mono uppercase">{scan.bssid}</span>
-                                  </div>
-                                  <span className="text-[9px] font-mono text-slate-300 ml-2">{scan.rssi}</span>
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <p className="text-[9px] text-slate-600 italic">Geen actief signaal gedetecteerd.</p>
-                          )}
-                          <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-[#0f172a]"></div>
-                        </div>
-                      )}
+                {/* 0,0 MARKER */}
+                {userLocation && (
+                  <div className="absolute z-[100] pointer-events-none" style={{ left: `${userLocation.x}%`, top: `${userLocation.y}%`, transform: 'translate(-50%, -50%)' }}>
+                    <div className="w-6 h-6 bg-emerald-500 rounded-full border-4 border-white shadow-lg flex items-center justify-center animate-pulse" />
+                  </div>
+                )}
+
+                {/* DE PUNTEN UIT DE DATABASE (GEPLOT PER 3 METER) */}
+                {positionedPoints.map((ap, i) => (
+                  <div key={i} className="absolute z-[90] transition-all duration-500" 
+                       style={{ 
+                         left: `${ap.renderX}%`, 
+                         top: `${ap.renderY}%`, 
+                         transform: 'translate(-50%, -50%)'
+                       }}>
+                    <div className="relative group">
+                      <div className="w-8 h-8 rounded-lg border-2 border-blue-500 bg-[#0f172a] flex items-center justify-center shadow-lg shadow-blue-500/30">
+                        <Wifi size={14} className="text-blue-400" />
+                      </div>
+                      <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-[8px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap">
+                        {ap.distance}m
+                      </div>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ))}
+
+                {/* KALIBRATIE HUD */}
+                {isCalibrating && (
+                  <svg className="absolute inset-0 w-full h-full pointer-events-none z-[110]">
+                    {rulerPoints.map((p, i) => <circle key={i} cx={`${p.x}%`} cy={`${p.y}%`} r="6" fill="#10b981" stroke="white" strokeWidth="2" />)}
+                    {rulerPoints.length === 2 && <line x1={`${rulerPoints[0].x}%`} y1={`${rulerPoints[0].y}%`} x2={`${rulerPoints[1].x}%`} y2={`${rulerPoints[1].y}%`} stroke="#10b981" strokeWidth="3" strokeDasharray="8" />}
+                  </svg>
+                )}
               </div>
             </TransformComponent>
           </TransformWrapper>
-        ) : (
-          <div className="text-slate-400 font-black uppercase text-[10px] tracking-[0.5em]">Kies een project & verdieping</div>
-        )}
+        ) : <div className="text-slate-500 text-xs font-black uppercase tracking-widest animate-pulse">Selecteer een verdieping...</div>}
 
-        {/* --- EDIT DRAWER --- */}
-        {isEditMode && editingAp && (
-          <div className="absolute top-4 right-4 bottom-4 w-[420px] bg-[#0f172a] border border-white/10 rounded-[32px] shadow-2xl z-[1000] flex flex-col">
-            <div className="p-8 border-b border-white/5 flex justify-between items-center">
-              <h3 className="font-black uppercase text-xs text-white italic">Punt Instellingen</h3>
-              <button onClick={() => setEditingAp(null)} className="p-2 text-slate-400"><X size={24}/></button>
-            </div>
-            <div className="p-8 space-y-6 overflow-y-auto flex-1">
-              <input type="text" value={editingAp.name} onChange={(e) => {
-                 const val = e.target.value;
-                 setAccessPoints(prev => prev.map(ap => ap.id === editingAp.id ? {...ap, name: val} : ap));
-                 setEditingAp(prev => ({...prev, name: val}));
-              }} className="w-full bg-black/40 border border-white/10 rounded-2xl px-5 py-4 text-white font-bold outline-none focus:ring-2 ring-blue-500/50" />
-              
-              <div className="space-y-4">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Koppel Netwerken</label>
-                <div className="bg-black/40 border border-white/10 rounded-2xl overflow-hidden divide-y divide-white/5 max-h-[400px] overflow-y-auto">
-                   {scans.length > 0 ? [...new Map(scans.map(s => [s.bssid, s])).values()].map(signal => {
-                      const isSelected = editingAp.assignedBssids.includes(signal.bssid);
-                      return (
-                        <div key={signal.bssid} onClick={() => {
-                          const next = isSelected ? editingAp.assignedBssids.filter(b => b !== signal.bssid) : [...editingAp.assignedBssids, signal.bssid];
-                          setAccessPoints(prev => prev.map(ap => ap.id === editingAp.id ? {...ap, assignedBssids: next} : ap));
-                          setEditingAp(prev => ({...prev, assignedBssids: next}));
-                        }} className={`p-4 flex items-center justify-between cursor-pointer ${isSelected ? 'bg-blue-600/20' : ''}`}>
-                           <div>
-                              <div className="text-xs font-bold text-white">{signal.ssid}</div>
-                              <div className="text-[9px] text-slate-500 font-mono">{signal.bssid}</div>
-                           </div>
-                           <div className={`w-5 h-5 rounded border-2 ${isSelected ? 'bg-blue-600 border-blue-600 text-white' : 'border-white/10'}`}>
-                              {isSelected && <Plus size={14} className="rotate-45" />}
-                           </div>
-                        </div>
-                      )
-                   }) : <p className="p-4 text-xs italic text-slate-600">Geen data beschikbaar...</p>}
-                </div>
-              </div>
-            </div>
-            <div className="p-8 border-t border-white/5 flex gap-4">
-               <button onClick={() => {setAccessPoints(prev => prev.filter(ap => ap.id !== editingAp.id)); setEditingAp(null);}} className="p-4 bg-rose-600/20 text-rose-500 rounded-2xl transition-colors hover:bg-rose-600 hover:text-white"><Trash2 size={20}/></button>
-               <button onClick={() => setEditingAp(null)} className="flex-1 bg-blue-600 text-white py-4 rounded-2xl font-black uppercase tracking-widest">Opslaan</button>
-            </div>
+        {/* KALIBRATIE MODAL */}
+        {isCalibrating && rulerPoints.length === 2 && (
+          <div className="absolute bottom-10 left-1/2 -translate-x-1/2 bg-[#0f172a] border-2 border-emerald-500 p-6 rounded-3xl z-[200] flex flex-col items-center gap-4">
+            <p className="text-white text-sm font-black uppercase italic">Afstand in meters?</p>
+            <button onClick={() => {
+               const m = prompt("Meters?");
+               if(m) {
+                 const p1 = rulerPoints[0]; const p2 = rulerPoints[1];
+                 const px = Math.sqrt(Math.pow((p2.x-p1.x)*(mapSize.width/100), 2) + Math.pow((p2.y-p1.y)*(mapSize.height/100),2));
+                 const newPpm = px / parseFloat(m);
+                 const updated = { ...ppm, [selectedFloorId]: newPpm };
+                 setPpm(updated);
+                 localStorage.setItem('fv_ppm_config', JSON.stringify(updated));
+                 setIsCalibrating(false); setRulerPoints([]);
+               }
+            }} className="bg-emerald-600 px-8 py-3 rounded-xl text-xs font-black text-white uppercase tracking-widest shadow-lg shadow-emerald-500/20">Bevestig</button>
           </div>
         )}
       </div>
