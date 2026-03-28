@@ -143,6 +143,7 @@ char *CreatWifiJson(wifi_ap_record_t *aps, uint16_t count, int64_t TimeStart, in
 
     cJSON_Delete(root);
     printf(json_string);
+    printf("\n");
 
     return json_string;
 }
