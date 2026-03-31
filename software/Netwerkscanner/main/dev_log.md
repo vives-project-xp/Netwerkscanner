@@ -122,38 +122,48 @@ static void IRAM_ATTR buttonIsrUp(void *arg)
 
 
 # stappen plan
-1. Systeem Initialisatie (NVS & WiFi)
-Initialiseer de NVS (Non-Volatile Storage), dit is nodig voor de WiFi-stack.
 
-Configureer de WiFi in Station Mode, maar maak nog geen verbinding met een netwerk.
+# CPU verbruik bij scannen
+--- [CPU GEBRUIK] (uS = Tijd actief | % = Belasting) ---
+MonitorCpuTask  819484          <1%
+IDLE            192341844               97%
+tiT             104539          <1%
+ScannerTask     56346           <1%
+nimble_host     3249            <1%
+sys_evt         3636            <1%
+MenuTask        104479          <1%
+Tmr Svc         7               <1%
+esp_timer       120911          <1%
+wifi            3057733         1%
+TryConnectToWif 7165            <1%
+ble_ll_task     1461            <1%
 
-Stel de 2.4 GHz en 5 GHz scan-parameters in (standaard scant de C5 beide).
+Ik zie dat de cpu niet veel tijd moet steken tijdens het scannen.  
+Ik kan dus andere taken uitvoeren tijdens het scannen.
 
-2. De RTOS Structuur Opzetten
-Maak één hoofdtaak aan (bijv. ScannerTask) met een stack-grootte van ±4096 bytes.
 
-Maak een Static Buffer of een kleine Queue aan om de scan-resultaten tijdelijk op te slaan zonder de heap te vervuilen.
+# ota (over the air update)
+partitie waren niet groot genoeg om nieuw programma op te zetten.
 
-3. De "Async" Scan Cyclus
-Start WiFi Scan: Gebruik esp_wifi_scan_start met de parameter block = false.
+# memory leak
+na 1 min scannen crasht het programma.
+mogelijk door json die payload niet free();
+het was inderdaad dat.
 
-Parallelle Actie: Terwijl de hardware de kanalen afgaat, laat je de CPU de JSON-string of het datapakket van de vorige meting voorbereiden.
+# 
+er werd geen melding naar de queue gestuurd al het verbonden is met de server.
 
-Event Wachten: Gebruik een RTOS Task Notification om de taak te laten pauzeren totdat de WiFi-driver het signaal "Scan Done" geeft.
+# memory error
+als er teveel netwerken gevonden worden kan de json niet gemaakt worden omdat het te groot wordt.
+Door dat de taken apart zitten was het telkens net voor de 2de keer scannen waardoor ik eerst in de foute taak de fout zat te zoeken.
 
-4. Bluetooth Intermezzo
-Zodra de WiFi-scan klaar is, start je een korte BLE Scan (bijv. 2-5 seconden).
+# test max send ap's
+23 gaat maar had 1 keer als het nog aan het verbinden met wifi was dat het crashte.
+30 lukt ook
 
-Verzamel de gevonden MAC-adressen en RSSI-waarden van de Bluetooth-apparaten.
+# toekomst
+Presence Detection: Detecteer wanneer een specifiek MAC-adres (bijvoorbeeld je eigen telefoon) in de buurt is en schakel een lamp in.
 
-5. Verbinding en Overdracht
-Verbind nu pas met je eigen WiFi-netwerk (of gebruik ESP-NOW als je geen volledige verbinding wilt).
+Channel Occupancy Monitor: Analyseer welke kanalen het drukst zijn (meeste beacons) om je eigen router optimaal in te stellen.
 
-Verstuur het voorbereide datapakket (WiFi 2.4 + 5 + BLE) naar de server.
-
-Sluit de verbinding netjes af om RAM vrij te maken.
-
-6. Opschonen en Rust (Deep Sleep)
-Gebruik esp_wifi_scan_stop en maak de tijdelijke buffers leeg.
-
-Zet de taak in vTaskDelay of breng de C5 in Deep Sleep voor een bepaald interval om stroom te besparen.
+Rogue AP Detection: Scan op Access Points met jouw SSID die niet jouw MAC-adres hebben (om "Evil Twin" aanvallen op jezelf te detecteren).

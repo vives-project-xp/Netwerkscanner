@@ -4,6 +4,7 @@
 #include "esp_event.h"
 #include "esp_log.h"
 #include "esp_netif.h"
+#include "esp_ota_ops.h"
 #include "esp_system.h"
 #include "esp_wifi.h"
 #include "freertos/FreeRTOS.h"
@@ -31,6 +32,7 @@
 #include "WiFi.h"
 #include "api.h"
 #include "http_post.h"
+#include "ota_server.h"
 #include "screen.h"
 #include "simple_fingerprinting.h"
 #include "wifi_key.h"
@@ -70,6 +72,13 @@ typedef enum {
 } ButtonEventT;
 
 typedef struct {
+  wifi_ap_record_t* records;
+  uint16_t count;
+  uint64_t timeStart;
+  uint64_t timeEnd;
+} scanResults_t;
+
+typedef struct {
   bool wifi2_4Ghz;
   bool wifi5Ghz;
   bool bluetooth;
@@ -78,11 +87,9 @@ typedef struct {
 ScanConfig_t GlobalScanConfig = {false, false, false};
 
 static QueueHandle_t menuQueue;
-/*
-static QueueHandle_t wifi2_4GhzQueue;
-static QueueHandle_t wifi5GhzQueue;
+static QueueHandle_t wifiQueue;
 static QueueHandle_t BluetoothQueue;
-*/
+
 TaskHandle_t xScannerHandle = NULL;
 TaskHandle_t xMonitorCpuHandle = NULL;
 
@@ -104,6 +111,16 @@ static const WifiCredentials_t myWifiNetworks[] = {
 };
 #define MAX_NETWORKS (sizeof(myWifiNetworks) / sizeof(myWifiNetworks[0]))
 static int currentMyWifiNetworksIndex = 0;
+
+wifi_country_t countryBe = {
+    .cc = "BE",          // Landcode
+    .schan = 1,          // Startkanaal (meestal 1)
+    .nchan = 13,         // Aantal kanalen voor 2.4GHz (1 t/m 13)
+    .max_tx_power = 20,  // Maximaal zendvermogen (in dBm)
+    .policy = WIFI_COUNTRY_POLICY_AUTO,  // Gebruik instellingen van verbonden
+                                         // AP of lokaal
+                                         //.wifi_5g_channel_mask
+};
 
 void ScanNetworks() {
   nvs_flash_init();
@@ -139,7 +156,40 @@ const char* Str(const char* prefix, int8_t val) {
   snprintf(buf, sizeof(buf), "%s%d", prefix, val);
   return buf;
 }
+void GetMyIp(char* ipAddress) {
+  esp_netif_ip_info_t ipInfo;
+  esp_netif_t* netif = esp_netif_get_handle_from_ifkey("WIFI_STA_DEF");
 
+  if (netif != NULL && esp_netif_get_ip_info(netif, &ipInfo) == ESP_OK) {
+    esp_ip4addr_ntoa(&ipInfo.ip, ipAddress, 16);
+  } else {
+    strcpy(ipAddress, "0.0.0.0");
+  }
+}
+void PrintConfiguredChannels(const wifi_scan_config_t* ScanConfig) {
+  printf("\n--- Actieve Scan Kanalen ---\n");
+
+  printf("2.4GHz: ");
+  bool found24 = false;
+  for (int i = 1; i <= 14; i++) {
+    if (ScanConfig->channel_bitmap.ghz_2_channels & (1 << i)) {
+      printf("[%d] ", BIT_NUMBER_TO_CHANNEL(i,WIFI_BAND_2G));
+      found24 = true;
+    }
+  }
+  if (!found24) printf("Geen");
+
+  printf("\n5GHz:   ");
+  bool found5 = false;
+  for (int i = 0; i <= 32; i++) {
+    if (ScanConfig->channel_bitmap.ghz_5_channels & (1ULL << i)) {
+      printf("[%d] ", BIT_NUMBER_TO_CHANNEL(i,WIFI_BAND_5G));
+      found5 = true;
+    }
+  }
+  if (!found5) printf("Geen");
+  printf("\n---------------------------\n");
+}
 void MonitorCpuTask(void* pvParameters) {
   char buffer[1024];
   while (1) {
@@ -165,18 +215,6 @@ static void BluethoothHostTask(void* param) {
   // NimBLE host stack begint hier te draaien
   nimble_port_run();
   nimble_port_freertos_deinit();
-}
-
-static void wifiEventHandler(
-    void* arg, esp_event_base_t eventBase, int32_t eventId,
-    void* eventData)  // voor melding wanner wifi scan klaar is
-{
-  if (eventId == WIFI_EVENT_SCAN_DONE) {
-    // Stuur het seintje naar de ScannerTask
-    if (xScannerHandle != NULL) {
-      xTaskNotifyGive(xScannerHandle);
-    }
-  }
 }
 
 void TryConnectToWifiAndServer(void* pvParameters) {
@@ -227,6 +265,9 @@ void TryConnectToWifiAndServer(void* pvParameters) {
           xEventGroupClearBits(communicationStateGroup, SERVER_CONNECTED_BIT);
         }
         close(sock);
+        ButtonEventT event = EVENT_WIFI_CONNECTED;
+        lastWifiState = true;
+        xQueueSend(menuQueue, &event, portMAX_DELAY);
       }
     } else {
       // Geen Wi-Fi
@@ -261,32 +302,115 @@ void TryConnectToWifiAndServer(void* pvParameters) {
 }
 
 void ScannerTask(void* pvParameters) {
-  uint64_t count = 0;
   while (1) {
     wifi_scan_config_t scanConfig = {
         .ssid = NULL,
         .bssid = NULL,
         .channel = 0,
-        .show_hidden = true,
+        .show_hidden = false,
         .scan_type = WIFI_SCAN_TYPE_ACTIVE,
-        .scan_time = {.active = {.min = 80, .max = 150}}};
+        //.scan_type = WIFI_SCAN_TYPE_PASSIVE,
+        .scan_time = {.active = {.min = 0, .max = 100}},
+        .coex_background_scan = false};
 
     if (GlobalScanConfig.wifi2_4Ghz && !GlobalScanConfig.wifi5Ghz) {
-      scanConfig.channel = 1;  // 2.4Ghz
+      scanConfig.channel_bitmap.ghz_2_channels = 0x3ffe;
+      scanConfig.channel_bitmap.ghz_5_channels = 0;
+      printf("2.4\n");
     } else if (!GlobalScanConfig.wifi2_4Ghz && GlobalScanConfig.wifi5Ghz) {
-      scanConfig.channel = 36;  // 5Ghz
-    } else {
-      scanConfig.channel = 0;  // alles
+      scanConfig.channel_bitmap.ghz_2_channels = 0;
+      //scanConfig.channel_bitmap.ghz_5_channels = 0xfeffffe;
+      scanConfig.channel_bitmap.ghz_5_channels = 0x02;
+      printf("5\n");
+    } else if (GlobalScanConfig.wifi2_4Ghz && GlobalScanConfig.wifi5Ghz) {
+      scanConfig.channel_bitmap.ghz_2_channels = 0x3ffe;
+      scanConfig.channel_bitmap.ghz_5_channels = 0xfeffffe;
+      printf("alles\n");
     }
+    
 
+    // wifi scannen
     if (GlobalScanConfig.wifi2_4Ghz || GlobalScanConfig.wifi5Ghz) {
-      esp_wifi_scan_start(&scanConfig, false);
-      ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(5000));
-      count++;
-      printf("scanning: %lld\n", count);
+      PrintConfiguredChannels(&scanConfig);
+      printf("free heap: %ld\n", esp_get_free_heap_size());  
+      
+      uint64_t timeStart = esp_timer_get_time();
+      esp_err_t ret = esp_wifi_scan_start(&scanConfig, true);
+      if (ret == ESP_ERR_WIFI_STATE) {
+        ESP_LOGE("SCAN", "Wifi status onjuist, is hij wel geinitialiseerd?");
+      } else if (ret == ESP_ERR_NO_MEM) {
+        ESP_LOGE("SCAN", "GEEN GEHEUGEN!  heap bezet.");
+      } else if (ret != ESP_OK) {
+        ESP_LOGE("SCAN", "Scan fout: %s", esp_err_to_name(ret));
+      }
+      uint64_t timeEnd = esp_timer_get_time();
+
+      uint16_t apCount = 0;
+      esp_wifi_scan_get_ap_num(&apCount);
+      if (apCount == 0) {
+        ESP_LOGI("scanner task: ", "Geen netwerken gevonden.");
+        continue;
+      }
+
+      ESP_LOGI("scanner task: ", "Aantal gevonden: %d", apCount);
+
+      wifi_ap_record_t* apRecords =
+          (wifi_ap_record_t*)malloc(sizeof(wifi_ap_record_t) * apCount);
+
+      if (apRecords == NULL) {
+        ESP_LOGE("scanner task", "Malloc faalde! Te weinig geheugen.");
+        continue;
+      }
+      // lees uit wifi geheugen.
+      if (esp_wifi_scan_get_ap_records(&apCount, apRecords) == ESP_OK) {
+        ESP_LOGI("scan task", "Gevonden netwerken: %d", apCount);
+
+        scanResults_t results;
+        results.records = apRecords;
+        results.count = apCount;
+        results.timeStart = timeStart;
+        results.timeEnd = timeEnd;
+
+        printf("scan time: %lld\n",(timeEnd-timeStart));
+
+        if (xQueueSend(wifiQueue, &results, pdMS_TO_TICKS(100)) != pdPASS) {
+          ESP_LOGE("scan task", "Queue vol! Data verwijderen.");
+          free(apRecords);
+        }
+      } else {
+        ESP_LOGE("scan task", "get_ap_records failed.\n");
+        free(apRecords);  // Altijd free-en als get_records faalt
+      }
     }
 
-    vTaskDelay(pdMS_TO_TICKS(1));
+    vTaskDelay(pdMS_TO_TICKS(100));
+  }
+}
+
+void JsonBuilderTask(void* pvParameters) {
+  scanResults_t data;
+
+  while (1) {
+    if (xQueueReceive(wifiQueue, &data, portMAX_DELAY)) {
+      ESP_LOGI("JSON", "Bezig met verwerken van %d APs", data.count);
+
+      char* payload = CreatWifiJson(data.records, data.count, data.timeStart,
+                                    data.timeEnd, 0, 0);
+      int8_t respons;
+      if (payload != NULL) {
+        respons = SendJsonPost(payload, serverUrl);
+        if (respons == 0) {
+          ESP_LOGI("JSON", "Data verzonden naar server.");
+        } else {
+          ESP_LOGI("JSON", "Data niet verzonden naar server.");
+        }
+
+        free(payload);
+      } else {
+        ESP_LOGI("json builder task", "payload was empty");
+      }
+      free(data.records);
+    }
   }
 }
 
@@ -337,9 +461,19 @@ void DrawMenu(const char* menuOptions[], int8_t menuIndex) {
 }
 
 void ToggleSelect(int8_t menuIndex) {
+  if (menuIndex == 4) {
+    if (xMonitorCpuHandle == NULL) {
+      xTaskCreate(MonitorCpuTask, "MonitorCpuTask", 4096, NULL, 1,
+                  &xMonitorCpuHandle);
+    } else {
+      vTaskDelete(xMonitorCpuHandle);
+      xMonitorCpuHandle = NULL;
+    }
+    return;
+  }
+
   if (xScannerHandle == NULL) {
-    // Taak bestaat nog niet, maak hem aan
-    xTaskCreate(ScannerTask, "ScannerTask", 16384, NULL, 6, &xScannerHandle);
+    xTaskCreate(ScannerTask, "ScannerTask", 4096, NULL, 6, &xScannerHandle);
   }
   // WIFI 2.4Ghz
   if (menuIndex == 1) {
@@ -365,14 +499,6 @@ void ToggleSelect(int8_t menuIndex) {
       GlobalScanConfig.bluetooth = false;
     } else {
       GlobalScanConfig.bluetooth = true;
-    }
-  } else if (menuIndex == 4) {
-    if (xMonitorCpuHandle == NULL) {
-      xTaskCreate(MonitorCpuTask, "MonitorCpuTask", 4096, NULL, 1,
-                  &xMonitorCpuHandle);
-    } else {
-      vTaskDelete(xMonitorCpuHandle);
-      xMonitorCpuHandle = NULL;
     }
   }
 }
@@ -430,7 +556,7 @@ void MenuTask(void* pvParameters) {
         EventBits_t status = xEventGroupGetBits(communicationStateGroup);
 
         if (status & SERVER_CONNECTED_BIT) {
-          DrawWifiIcon(20, 30, 0x07E0);
+          DrawWifiIcon(20, 20, 0x07E0);
           printf("verbonden met server\n");
         } else if (status & WIFI_CONNECTED_BIT) {
           DrawWifiIcon(20, 20, 0xFFE0);
@@ -438,7 +564,11 @@ void MenuTask(void* pvParameters) {
           esp_wifi_get_config(WIFI_IF_STA, &conf);
           printf("wifi connected to: SSID: %s\n", (char*)conf.sta.ssid);
 
+          char ip[16];
+          GetMyIp(ip);
           DrawStringFast(40, 6, (char*)conf.sta.ssid, 0xffff, 0x0000, 1);
+          DrawStringFast(40, 16, ip, 0xffff, 0x0000, 1);
+
         } else {
           DrawWifiIcon(20, 20, 0xF800);
           printf("geen verbinding met wifi\n");
@@ -577,10 +707,13 @@ esp_err_t InitWifiBluethooth(void) {
 
   wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
   ESP_ERROR_CHECK(esp_wifi_init(&cfg));
-  ESP_ERROR_CHECK(esp_event_handler_instance_register(
-      WIFI_EVENT, WIFI_EVENT_SCAN_DONE, &wifiEventHandler, NULL,
-      NULL));  // melding scan klaar
   ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+
+  esp_err_t responsCountry = esp_wifi_set_country(&countryBe);
+  if (responsCountry != ESP_OK) {
+    printf("Fout bij instellen landcode: %s\n", esp_err_to_name(responsCountry));
+  }
+
   ESP_ERROR_CHECK(esp_wifi_start());
 
   // 3. NimBLE Stack Setup
@@ -639,7 +772,7 @@ extern "C" void app_main(void) {
     ESP_LOGE(LOGTAG, "Radio initialisatie mislukt!");
     return;
   }
-
+  wifiQueue = xQueueCreate(5, sizeof(scanResults_t));
   xTaskCreate(MenuTask,    // Naam van de functie
               "MenuTask",  // Naam voor debugging
               3096,        // Stack size in bytes
@@ -651,21 +784,10 @@ extern "C" void app_main(void) {
               NULL, 7,
               NULL  //
   );
+  // ota upload is sneller dan usb
+  xTaskCreate(OtaWebserverTask, "ota server", 4096, NULL, 20, NULL);
 
-  //
-  // ScreenTest();
-
-  String payload(MakeWifiJson());
-  SendJsonPost(payload, serverUrl);
-
-  printf("send data to server\n");
-  // MakeJson();
-
-  // ScanNetworks();
-
-  // TestSimpleFingerprinting();
+  xTaskCreate(JsonBuilderTask, "json builder", 4096, NULL, 6, NULL);
 
   CheckCpuFreq();
-
-  // testDrawPixel();
 }
