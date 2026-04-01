@@ -44,3 +44,4 @@ __pycache__/
 #me
 Netwerkscanner.code-workspace
 
+software/wifi-api/.env
