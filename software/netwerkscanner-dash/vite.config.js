@@ -8,6 +8,7 @@ export default defineConfig({
     tailwindcss(),
   ],
   server: {
+    host: true,
     proxy: {
       '/api': {
         target: 'http://10.20.10.24:8081',

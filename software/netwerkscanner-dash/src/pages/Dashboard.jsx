@@ -38,7 +38,8 @@ export default function FloorVisionPro({ buildings = [] }) {
       try {
         const res = await fetch('/api/dev'); 
         const data = await res.json();
-        setScans(Array.isArray(data) ? data : []);
+          setScans(Array.isArray(data) ? data : []);
+          console.log('Database info (API /api/dev):', data);
         setLoading(false);
       } catch (e) { setLoading(false); }
     };
