@@ -27,8 +27,16 @@ export function useBuildings() {
     }
   }, [buildings, isLoaded]);
 
+  // Alternatieve unieke ID generator
+  function generateId() {
+    return (
+      Date.now().toString(36) +
+      Math.random().toString(36).substr(2, 9)
+    );
+  }
+
   const addBuilding = (name, location) => {
-    const newB = { id: crypto.randomUUID(), name, location, floors: [] };
+    const newB = { id: generateId(), name, location, floors: [] };
     setBuildings([...buildings, newB]);
   };
 
@@ -43,7 +51,7 @@ export function useBuildings() {
       if (b.id === buildingId) {
         return {
           ...b,
-          floors: [...b.floors, { id: crypto.randomUUID(), name: floorName, image }]
+          floors: [...b.floors, { id: generateId(), name: floorName, image }]
         };
       }
       return b;

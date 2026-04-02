@@ -1,9 +1,9 @@
 #ifndef API_H
 #define API_H
 
-
 #include "esp_wifi.h"
-char* MakeWifiJson();
-void PrintApInfo(const wifi_ap_record_t *ap);
-char *CreateJson(wifi_ap_record_t *aps, int count, int64_t TimeStart, int64_t TimeEnd, int32_t x, int32_t y);
+char* MakeWifiJsonExample();
+void PrintApInfo(const wifi_ap_record_t* ap);
+char* CreatWifiJson(wifi_ap_record_t* aps, uint16_t count, uint64_t TimeStart,
+                    uint64_t TimeEnd, int32_t x , int32_t y );
 #endif
