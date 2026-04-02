@@ -2,13 +2,15 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-COPY api/ /app
 
-RUN pip install flask mysql-connector-python flask-cors
+COPY requirements.txt .  
+
+
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
 
 EXPOSE 80
 
-CMD ["python", "app.py"]
-
-
-
+# Start de app vanuit de api map
+CMD ["python", "api/app.py"]

@@ -1,6 +1,6 @@
-# Dit is een Flask API voor het beheren van WiFi-scans en opslaan van waardes in een MariaDB database.
-# Het biedt endpoints voor het uploaden van scans, ophalen van scans en netwerken.
-# Het Importeert ook de fingerprinting code om nieuwe scans een voorspelde locatie in de database te steken.
+
+
+from flask import Flask, request, jsonify   
 from flask_cors import CORS
 import mysql.connector
 import re

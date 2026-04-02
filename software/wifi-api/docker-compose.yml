@@ -15,7 +15,7 @@ services:
     volumes:
       - db_data:/var/lib/mysql
 
-  api:
+  wifi_api:
     build: .
     container_name: wifi_api
     restart: unless-stopped
