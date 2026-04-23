@@ -1,0 +1,61 @@
+# -------------------------
+# Python
+# -------------------------
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+venv/
+env/
+
+# -------------------------
+# PHP
+# -------------------------
+vendor/
+composer.lock
+
+# -------------------------
+# Docker
+# -------------------------
+# MariaDB data directories
+**/data/
+**/db/
+**/mysql/
+**/mariadb/
+
+# Docker build artifacts
+*.log
+*.pid
+
+# -------------------------
+# VS Code
+# -------------------------
+.vscode/
+*.code-workspace
+
+# -------------------------
+# OS files
+# -------------------------
+.DS_Store
+Thumbs.db
+
+# -------------------------
+# Node.js
+# -------------------------
+node_modules/
+dist/
+build/
+
+# -------------------------
+# Docker Volumes
+# -------------------------
+db_data/
+volumes/
+data/
+
+# -------------------------
+# Specifiek voor dit project
+# -------------------------
+# Named volume voor MariaDB (voorkomt dat database data mee gaat naar Git)
+db_data/

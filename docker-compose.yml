@@ -1,0 +1,63 @@
+services:
+  mariadb:
+    image: mariadb:latest
+    container_name: mariadb
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+
+  wifi_api:
+    build: ./software/wifi-api
+    container_name: wifi_api
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "8081:80"
+    depends_on:
+      - mariadb
+
+  network-scanner:
+    build:
+      context: ./software/netwerkscanner-dash
+    container_name: network-scanner
+    command: npm run dev
+    working_dir: /app
+    volumes:
+      - ./software/netwerkscanner-dash:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    environment:
+      - NODE_ENV=development
+      - VITE_UPLOAD_SERVER=http://upload-server:3030
+    depends_on:
+      - wifi_api
+      - upload-server
+
+  upload-server:
+    build:
+      context: ./software/netwerkscanner-dash
+    container_name: upload-server
+    command: npm run upload-server
+    working_dir: /app
+    volumes:
+      - ./software/netwerkscanner-dash:/app
+      - ./software/assets/projectdata:/assets/projectdata
+      - /app/node_modules
+    ports:
+      - "3030:3030"
+    environment:
+      - NODE_ENV=development
+
+volumes:
+  db_data:
