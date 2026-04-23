@@ -1,6 +1,7 @@
 # deze code is om x en y te voorspellen op basis van de RSSI-waarden en bssid's als om nieuwe scans een locatie te geven.
-import mysql.connector
 import math
+import os
+
 import mysql.connector
 
 # Functie om verbinding te maken met de database
@@ -25,16 +26,6 @@ def get_db():
 #zoek uit de lijst van som de kleinste 
 #is het verschil groter dan x -> markeren als komt niet overeen
 #(punt komt met niets overeen in de fingerprinting database)
-
-
-db = get_db()
-    cursor = db.cursor()
-
-    # Execute a simple test query
-    cursor.execute("SELECT DATABASE();")
-    result = cursor.fetchone()
-
-    print(f"✅ Success! Connected to database: {result[0]}")
 
 # Bereken de afstand tussen gescande netwerken en handmatige netwerken op basis van RSSI-waarden
 def rssi_distance(scan_networks, manual_networks):
