@@ -126,8 +126,8 @@ def findLocation(scan_id):#returns x,y
     db.close()
     return x,y
 
-x,y =findLocation(10)
-updateLocation(x,y,1)
+#x,y =findLocation(10)
+#updateLocation(x,y,1)
 
 
 
