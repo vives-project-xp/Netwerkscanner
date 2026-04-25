@@ -36,9 +36,36 @@ def get_db():
 #id, scan_id, device_id, scan_time_start, scan_time_end, x, y, manual, net_ssid, net_bssid, primary_channel, secondary_channel, net_rssi, auth_mode, pairwise_cipher, group_cipher, antenna, phy_modes_11b, phy_modes_11g, phy_modes_11n, phy_modes_11a, phy_modes_11ac, phy_modes_11ax, phy_modes_lr, wps, ftm_responder, ftm_initiator, bandwidth, vht_freq1, vht_freq2, he_ap_bss_color, he_ap_partial_bss_color, he_ap_bss_color_disabled, he_ap_bssid_index, reserved, country
 #http://10.20.10.24:8081/fingerprint
 
+def findLowest(fingerprintScores):
+    lowest_item = fingerprintScores[0]
+    id = None
+    for entry in fingerprintScores:
+        if entry['differenceAverage'] < lowest_item['differenceAverage']:
+            lowest_item = entry
+    print("lowest: "+str(lowest_item['scan_id']))
+    print("differenceAverage: "+str(lowest_item['differenceAverage']))
+    return lowest_item['scan_id']
 
+def updateLocation(x,y,scan_id):
+    try:
+        db = get_db()
+        cursor = db.cursor()
+        query = """
+                UPDATE heatmap 
+                SET x = %s, y = %s 
+                WHERE scan_id = %s
+            """
+        data = (x, y, scan_id)
+        cursor.execute(query, data)
+        db.commit()
+        print(f"Successfully updated scan_id {scan_id} to coordinates ({x}, {y})")
+        return True
+    except Exception as e:
+        db.rollback()
+        print(f"Error updating database: {e}")
+        return False
 
-def findLocation(scan_id):
+def findLocation(scan_id):#returns x,y
     db = get_db()
     cursor = db.cursor()
 
@@ -79,13 +106,28 @@ def findLocation(scan_id):
 
 
     print(fingerprintScores)
+    location = findLowest(fingerprintScores)
+    print(location)
+
+    query = """
+            SELECT x, y 
+            FROM fingerprint 
+            WHERE scan_id = %s AND manual = 1
+        """
+    cursor.execute(query, (location,))
+    results = cursor.fetchone()
+    x = results[0]
+    y = results[1]
+    print(f"Coordinates: {x}, {y}")
 
 
 
 
     db.close()
+    return x,y
 
-findLocation(4)
+x,y =findLocation(10)
+updateLocation(x,y,1)
 
 
 

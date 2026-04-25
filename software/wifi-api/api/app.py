@@ -5,7 +5,7 @@ from flask_cors import CORS
 import mysql.connector
 import re
 
-from fingerprint import update_scan_with_prediction, predict_location
+from fingerprint import update_scan_with_prediction,findLocation,updateLocation
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": [
@@ -131,9 +131,10 @@ def upload():
 
         # Fingerprinting alleen voor niet-manual scans
         if not manual:
-            update_scan_with_prediction(scan_id)
+            x,y = findLocation(scan_id)
+            updateLocation(x,y,scan_id)
 
-        return jsonify({"status": "success", "scan_id": scan_id}), 200
+        return jsonify({"status": "success", "scan_id": scan_id,"x":x,"y":y}), 200
 
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
@@ -191,15 +192,14 @@ def get_dev():
 @app.route('/predict/<int:scan_id>', methods=['GET'])
 def api_predict(scan_id):
     try:
-        point, distance = predict_location(scan_id)
+        x,y= findLocation(scan_id)
 
-        if point is None:
+        if x is None:
             return jsonify({"error": "No manual points found"}), 404
 
         return jsonify({
-            "x": point["x"],
-            "y": point["y"],
-            "distance": distance
+            "x": x,
+            "y": y,
         }), 200
 
     except Exception as e:
