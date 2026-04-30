@@ -204,6 +204,17 @@ def api_predict(scan_id):
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+# -----------------------------
+# Real Time
+# -----------------------------
+import time
+
+@app.route('/time', methods=['GET'])
+def get_time():
+    return jsonify({
+        "timestamp": int(time.time())
+    }), 200
 
 # -----------------------------
 # Start server

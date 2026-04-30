@@ -16,6 +16,7 @@
 #include "nvs_flash.h"
 #include "services/gap/ble_svc_gap.h"
 
+
 // Moet hier staan anders compile error door combinatie van
 // lwIP en Arduino
 #ifdef INADDR_NONE
