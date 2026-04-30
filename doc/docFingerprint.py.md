@@ -8,3 +8,6 @@ werkt dit niet, de container is nog niet gestart. gebruik `docker logs wifi_api`
 
 start python programma
 `python3 fingerprint.py`
+
+build het volledige project
+`docker compose up -d --build`
