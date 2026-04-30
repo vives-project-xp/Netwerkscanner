@@ -52,6 +52,20 @@ export default function FloorVisionPro({ buildings = [] }) {
   const currentFloor = currentBuilding?.floors?.find(f => String(f.id) === String(selectedFloorId));
   const currentPpmValue = ppm[selectedFloorId] || 0;
 
+  const latestPointId = useMemo(() => {
+    if (!scans.length) return null;
+    let bestId = null;
+    let bestValue = -Infinity;
+    scans.forEach(scan => {
+      const id = parseInt(scan.scan_id || scan.scanId || 0, 10);
+      if (!Number.isNaN(id) && id > bestValue) {
+        bestValue = id;
+        bestId = `${scan.x}_${scan.y}`;
+      }
+    });
+    return bestId;
+  }, [scans]);
+
   const positionedPoints = useMemo(() => {
     if (!userLocation || !currentPpmValue || mapSize.width === 0 || scans.length === 0) return [];
 
@@ -66,12 +80,17 @@ export default function FloorVisionPro({ buildings = [] }) {
           gridX: parseFloat(scan.x || 0),
           gridY: parseFloat(scan.y || 0),
           networks: [],
-          maxRssi: -100 
+          maxRssi: -100,
+          maxScanId: -Infinity,
         };
       }
-      const rssiVal = parseInt(scan.net_rssi || -100);
+      const rssiVal = parseInt(scan.net_rssi || -100, 10);
+      const scanIdVal = parseInt(scan.scan_id || scan.scanId || 0, 10);
       acc[key].networks.push({ ssid: scan.net_ssid, bssid: scan.net_bssid, rssi: rssiVal });
       if (rssiVal > acc[key].maxRssi) acc[key].maxRssi = rssiVal;
+      if (!Number.isNaN(scanIdVal) && scanIdVal > acc[key].maxScanId) {
+        acc[key].maxScanId = scanIdVal;
+      }
       return acc;
     }, {});
 
@@ -79,8 +98,9 @@ export default function FloorVisionPro({ buildings = [] }) {
       ...group,
       renderX: userLocation.x + (group.gridX * meterToPercentX),
       renderY: userLocation.y + (group.gridY * meterToPercentY),
+      isLatestScan: group.id === latestPointId,
     }));
-  }, [scans, userLocation, currentPpmValue, mapSize]);
+  }, [scans, userLocation, currentPpmValue, mapSize, latestPointId]);
 
   const activePointData = useMemo(() => 
     positionedPoints.find(p => p.id === activePointId), 
@@ -233,11 +253,11 @@ export default function FloorVisionPro({ buildings = [] }) {
                         <div key={i} className="absolute z-[150]" style={{ left: `${gp.renderX}%`, top: `${gp.renderY}%`, transform: 'translate(-50%, -50%)' }}>
                            <button 
                               onClick={(e) => { e.stopPropagation(); setActivePointId(gp.id); }}
-                              className={`rounded-full border-[2px] border-white transition-all bg-black ${activePointId === gp.id ? 'scale-150 ring-4 ring-blue-500/30' : 'hover:scale-125'}`} 
+                              className={`rounded-full border-[2px] border-white transition-all bg-black ${activePointId === gp.id ? 'scale-150 ring-4 ring-blue-500/30' : 'hover:scale-125'} ${gp.isLatestScan ? 'ring-4 ring-yellow-400/60 shadow-[0_0_12px_rgba(234,179,8,0.65)]' : ''}`}
                               style={{ 
                                 width: `${12 / zoomLevel}px`, 
                                 height: `${12 / zoomLevel}px`,
-                                borderColor: gp.maxRssi > -60 ? '#10b981' : '#3b82f6'
+                                borderColor: gp.isLatestScan ? '#f59e0b' : (gp.maxRssi > -60 ? '#10b981' : '#3b82f6')
                               }}
                             />
                         </div>
