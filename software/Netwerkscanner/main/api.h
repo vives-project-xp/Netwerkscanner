@@ -9,4 +9,5 @@ char* CreatWifiJson(wifi_ap_record_t* aps, uint16_t start, uint16_t count,
 double GetJsonNumber(const char* json_string, const char* key);
 extern float locationX;
 extern float locationY;
+uint64_t GetJsonBigNumber(const char *json, const char *key);
 #endif

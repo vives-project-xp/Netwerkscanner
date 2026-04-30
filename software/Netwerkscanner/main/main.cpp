@@ -37,6 +37,7 @@
 #include "simple_fingerprinting.h"
 #include "wifi_key.h"
 #include "main.h"
+#include "time_sync.h"
 
 #define ENABLE_CPU_MONITOR 1
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
@@ -103,9 +104,7 @@ static QueueSetHandle_t combinedQueueSet;
 TaskHandle_t xScannerHandle = NULL;
 TaskHandle_t xMonitorCpuHandle = NULL;
 
-#define SERVER_IP "10.20.10.24"
-#define SERVER_PORT 8081
-const char* serverUrl = "http://10.20.10.24:8081/upload";
+
 #define WIFI_CONNECTED_BIT BIT0    // verbondenMetWifi
 #define SERVER_CONNECTED_BIT BIT1  // verbondenMetServer
 
@@ -327,6 +326,8 @@ void TryConnectToWifiAndServer(void* pvParameters) {
         if (err == 0) {
           ESP_LOGI("SERVER", "Server bereikbaar (Ping OK)");
           xEventGroupSetBits(communicationStateGroup, SERVER_CONNECTED_BIT);
+          TimeSync::Init();
+          TimeSync::Sync();
         } else {
           ESP_LOGW("SERVER", "Server niet bereikbaar");
           xEventGroupClearBits(communicationStateGroup, SERVER_CONNECTED_BIT);
@@ -919,7 +920,7 @@ extern "C" void app_main(void) {
               5,           // Prioriteit (hoger getal = hogere prioriteit)
               NULL  // Task handle (optioneel, om de task later aan te sturen)
   );
-  xTaskCreate(TryConnectToWifiAndServer, "TryConnectToWifiAndServer", 2596,
+  xTaskCreate(TryConnectToWifiAndServer, "TryConnectToWifiAndServer", 4096,
               NULL, 5,
               NULL  //
   );

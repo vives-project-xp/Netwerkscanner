@@ -183,6 +183,13 @@ double GetJsonNumber(const char *json_string, const char *key) {
     
     return result;
 }
+uint64_t GetJsonBigNumber(const char *json, const char *key) {
+    cJSON *root = cJSON_Parse(json);
+    cJSON *item = cJSON_GetObjectItem(root, key);
+    uint64_t val = (item) ? (uint64_t)item->valuedouble : 0; 
+    cJSON_Delete(root);
+    return val;
+}
 
 char* CreateBluethoothJson() {
   return "nog niet gemaakt";
