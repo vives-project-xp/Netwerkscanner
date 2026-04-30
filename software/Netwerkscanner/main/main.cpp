@@ -1,4 +1,3 @@
-
 #include "driver/gpio.h"
 #include "esp_clk_tree.h"
 #include "esp_event.h"
@@ -36,6 +35,7 @@
 #include "screen.h"
 #include "simple_fingerprinting.h"
 #include "wifi_key.h"
+#include "main.h"
 
 #define ENABLE_CPU_MONITOR 1
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
@@ -61,15 +61,16 @@ static volatile bool pressedSelect = 0;
 static volatile bool pressedBack = 0;
 static volatile bool pressedMulti = 0;
 
-typedef enum {
-  BUTTON_UP,
-  BUTTON_DOWN,
-  BUTTON_SELECT,
-  BUTTON_BACK,
-  BUTTON_MULTI,
-  EVENT_WIFI_CONNECTED,
-  EVENT_WIFI_DISCONNECTED
-} ButtonEventT;
+//typedef enum {
+//  BUTTON_UP,
+//  BUTTON_DOWN,
+//  BUTTON_SELECT,
+//  BUTTON_BACK,
+//  BUTTON_MULTI,
+//  EVENT_WIFI_CONNECTED,
+//  EVENT_WIFI_DISCONNECTED,
+//  EVENT_LOCATION
+//} ButtonEventT;
 
 typedef struct {
   wifi_ap_record_t* records;
@@ -93,7 +94,7 @@ typedef struct {
 
 ScanConfig_t GlobalScanConfig = {false, false, false};
 
-static QueueHandle_t menuQueue;
+       QueueHandle_t menuQueue = NULL;
 static QueueHandle_t wifiQueue;
 static QueueHandle_t BluetoothQueue;
 static QueueSetHandle_t combinedQueueSet;
@@ -129,6 +130,9 @@ wifi_country_t countryBe = {
                                          // AP of lokaal
                                          //.wifi_5g_channel_mask
 };
+
+LocationBasket_t LocationBasket; 
+SemaphoreHandle_t LocationMutex;
 
 void ScanNetworks() {
   nvs_flash_init();
@@ -520,8 +524,7 @@ void JsonBuilderTask(void* pvParameters) {
         xQueueReceive(BluetoothQueue, &btData, 0);
         // Voeg toe aan verzendlijst...
       }
-      // Forceer verzenden
-      verstuurNu();
+
     }
   }
 }
@@ -661,6 +664,15 @@ void MenuTask(void* pvParameters) {
         printf("Multi:\n");
         DrawStringFast(132, 0, "Multi   ", 0xffff, 0x0001, 3);
         esp_restart();
+      } else if (ontvangenEvent == EVENT_LOCATION) {
+        printf("Location:\n");
+        if (xSemaphoreTake(LocationMutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+          DrawStringFast(10, 220, Str("X ",LocationBasket.locationX), 0xffff, 0x0001, 3);
+          DrawStringFast(10, 220, Str("Y ",LocationBasket.locationY), 0xffff, 0x0001, 3);
+          xSemaphoreGive(LocationMutex);
+        }
+        
+        
       } else if (ontvangenEvent == EVENT_WIFI_CONNECTED ||
                  ontvangenEvent == EVENT_WIFI_DISCONNECTED) {
         // Check de status zonder de taak te blokkeren
@@ -842,7 +854,7 @@ esp_err_t InitWifiBluethooth(void) {
 }
 
 void CreatButtonInterrupts() {
-  menuQueue = xQueueCreate(15, sizeof(uint8_t));
+  
 
   gpio_config_t io_conf = {};
   io_conf.intr_type = GPIO_INTR_ANYEDGE;
@@ -877,6 +889,12 @@ extern "C" void app_main(void) {
   printf("Build Date: %s\n", __DATE__);
   printf("Build Time: %s\n", __TIME__);
 
+  LocationMutex = xSemaphoreCreateMutex();
+  menuQueue = xQueueCreate(15, sizeof(ButtonEventT));
+  if (menuQueue == NULL) {
+        ESP_LOGE("INIT", "Fatal: Could not create menuQueue!");
+        return;
+    }
   GpioSetup();
 
   esp_err_t status = InitWifiBluethooth();
@@ -884,11 +902,11 @@ extern "C" void app_main(void) {
     ESP_LOGE(LOGTAG, "Radio initialisatie mislukt!");
     return;
   }
-
+  
   wifiQueue = xQueueCreate(5, sizeof(scanWifiResults_t));
   BluetoothQueue = xQueueCreate(50, sizeof(scanBluethoothResults_t));
 
-  QueueSetHandle_t combinedQueueSet = xQueueCreateSet(5 + 50);
+  combinedQueueSet = xQueueCreateSet(5 + 50);
   xQueueAddToSet(wifiQueue, combinedQueueSet);
   xQueueAddToSet(BluetoothQueue, combinedQueueSet);
 

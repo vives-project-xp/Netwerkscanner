@@ -168,10 +168,24 @@ char* CreatWifiJson(wifi_ap_record_t* aps, uint16_t start, uint16_t count,
   }
   return json_string;
 }
-// wil je json data lezen -> zoek: json parsen
+
+double GetJsonNumber(const char *json_string, const char *key) {
+    double result = 0;
+    cJSON *root = cJSON_Parse(json_string);
+    
+    if (root != NULL) {
+        cJSON *item = cJSON_GetObjectItemCaseSensitive(root, key);
+        if (cJSON_IsNumber(item)) {
+            result = item->valuedouble;
+        }
+        cJSON_Delete(root);
+    }
+    
+    return result;
+}
 
 char* CreateBluethoothJson() {
-  return json_string
+  return "nog niet gemaakt";
 }
 
 char* MakeWifiJsonExample() {

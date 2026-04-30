@@ -6,4 +6,7 @@ char* MakeWifiJsonExample();
 void PrintApInfo(const wifi_ap_record_t* ap);
 char* CreatWifiJson(wifi_ap_record_t* aps, uint16_t start, uint16_t count,
                     uint64_t TimeStart, uint64_t TimeEnd, int32_t x, int32_t y);
+double GetJsonNumber(const char* json_string, const char* key);
+extern float locationX;
+extern float locationY;
 #endif

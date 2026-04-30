@@ -37,6 +37,8 @@ def get_db():
 #http://10.20.10.24:8081/fingerprint
 
 def findLowest(fingerprintScores):
+    if not fingerprintScores:
+        return None
     lowest_item = fingerprintScores[0]
     id = None
     for entry in fingerprintScores:
