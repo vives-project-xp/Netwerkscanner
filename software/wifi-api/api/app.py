@@ -140,7 +140,7 @@ def upload():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # -----------------------------
-# GET: Heel de heatmap tabel
+# GET: Entire Heatmap table
 # -----------------------------
 @app.route('/heatmap', methods=['GET'])
 def get_heatmap():
@@ -155,7 +155,7 @@ def get_heatmap():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # -----------------------------
-# GET: Heel de fingerprint tabel
+# GET: Entire Fingerprint table
 # -----------------------------
 @app.route('/fingerprint', methods=['GET'])
 def get_fingerprint():
@@ -170,7 +170,7 @@ def get_fingerprint():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # -----------------------------
-# GET: Heel de DEV tabel 
+# GET: Entire Dev table 
 # -----------------------------
 @app.route('/dev', methods=['GET'])
 def get_dev():
@@ -187,7 +187,7 @@ def get_dev():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # -----------------------------
-# GET: Predict locatie
+# GET: Predict location
 # -----------------------------
 @app.route('/predict/<int:scan_id>', methods=['GET'])
 def api_predict(scan_id):
