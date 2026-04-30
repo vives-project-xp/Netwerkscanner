@@ -2,7 +2,7 @@
 
 [ftm research](./varia/esp/ftm%20research.md)  
 [wifi research](./varia/esp/wifi%20research.md)  
-[wifi handige img](./varia/assets/)
+[wifi handige img](./varia/assets/)  
 [docker/fingerprinting](./docFingerprint.py.md)
 
 
