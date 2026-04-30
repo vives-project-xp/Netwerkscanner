@@ -109,17 +109,22 @@ def findLocation(scan_id):#returns x,y
 
     print(fingerprintScores)
     location = findLowest(fingerprintScores)
+
     print(location)
 
-    query = """
-            SELECT x, y 
-            FROM fingerprint 
-            WHERE scan_id = %s AND manual = 1
-        """
-    cursor.execute(query, (location,))
-    results = cursor.fetchone()
-    x = results[0]
-    y = results[1]
+    if location == True:
+        query = """
+                SELECT x, y 
+                FROM fingerprint 
+                WHERE scan_id = %s AND manual = 1
+            """
+        cursor.execute(query, (location,))
+        results = cursor.fetchone()
+        x = results[0]
+        y = results[1]
+    else:
+        x = 0
+        y = 0
     print(f"Coordinates: {x}, {y}")
 
 

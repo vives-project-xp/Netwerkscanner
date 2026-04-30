@@ -668,7 +668,7 @@ void MenuTask(void* pvParameters) {
         printf("Location:\n");
         if (xSemaphoreTake(LocationMutex, pdMS_TO_TICKS(100)) == pdTRUE) {
           DrawStringFast(10, 220, Str("X ",LocationBasket.locationX), 0xffff, 0x0001, 3);
-          DrawStringFast(10, 220, Str("Y ",LocationBasket.locationY), 0xffff, 0x0001, 3);
+          DrawStringFast(30, 220, Str("Y ",LocationBasket.locationY), 0xffff, 0x0001, 3);
           xSemaphoreGive(LocationMutex);
         }
         
