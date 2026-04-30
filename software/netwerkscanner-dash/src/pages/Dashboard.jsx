@@ -99,7 +99,10 @@ export default function FloorVisionPro({ buildings = [] }) {
       renderX: userLocation.x + (group.gridX * meterToPercentX),
       renderY: userLocation.y + (group.gridY * meterToPercentY),
       isLatestScan: group.id === latestPointId,
-    }));
+    })).sort((a, b) => {
+      if (a.gridX !== b.gridX) return a.gridX - b.gridX;
+      return a.gridY - b.gridY;
+    });
   }, [scans, userLocation, currentPpmValue, mapSize, latestPointId]);
 
   const activePointData = useMemo(() => 
