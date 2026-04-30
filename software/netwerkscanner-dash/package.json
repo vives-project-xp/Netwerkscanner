@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "dev:full": "concurrently \"npm run upload-server\" \"npm run dev\"",
     "dev": "vite",
     "upload-server": "node file-upload-server.js",
     "build": "vite build",
