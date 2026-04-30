@@ -112,7 +112,10 @@ def findLocation(scan_id):#returns x,y
 
     print(location)
 
-    if location == True:
+    if location == None:
+        x = 0
+        y = 0
+    else:
         query = """
                 SELECT x, y 
                 FROM fingerprint 
@@ -122,9 +125,6 @@ def findLocation(scan_id):#returns x,y
         results = cursor.fetchone()
         x = results[0]
         y = results[1]
-    else:
-        x = 0
-        y = 0
     print(f"Coordinates: {x}, {y}")
 
 
