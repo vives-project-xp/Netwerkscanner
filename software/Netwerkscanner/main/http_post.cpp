@@ -5,18 +5,44 @@
 #include "esp_http_client.h"
 #include "esp_log.h"
 #include "main.h"
-//#include "freertos/semphr.h"
+// #include "freertos/semphr.h"
 
 static const char* TAG = "HTTP_POST";
-
-
 
 // Event handler om de response van de server te verwerken
 esp_err_t _http_event_handler(esp_http_client_event_t* evt) {
   switch (evt->event_id) {
     case HTTP_EVENT_ON_DATA:
       if (!esp_http_client_is_chunked_response(evt->client)) {
-        printf("Server response: %.*s\n", evt->data_len, (char*)evt->data);
+        int len = evt->data_len;
+        char buffer[256];
+        if (len < sizeof(buffer)) {
+          memcpy(buffer, evt->data, len);
+          buffer[len] = '\0';  // Safe null-termination
+
+          // 2. Parse the JSON from our local buffer
+          float locationX = (float)GetJsonNumber(buffer, "x");
+          float locationY = (float)GetJsonNumber(buffer, "y");
+
+          ESP_LOGI("HTTP_CLIENT", "Ontvangen: %s", buffer);
+          ESP_LOGI("HTTP_CLIENT", "Locatie: x=%.2f, y=%.2f", locationX,
+                   locationY);
+
+          // 3. Thread-safe storage and Queue notification
+          if (LocationMutex != NULL &&
+              xSemaphoreTake(LocationMutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+            LocationBasket.locationX = locationX;
+            LocationBasket.locationY = locationY;
+            xSemaphoreGive(LocationMutex);
+
+            ButtonEventT event = EVENT_LOCATION;
+            // Use xQueueSend instead of FromISR since this is a callback, not a
+            // hardware ISR
+            xQueueSend(menuQueue, &event, pdMS_TO_TICKS(10));
+          }
+        } else {
+          ESP_LOGE("HTTP_CLIENT", "Response te groot voor buffer!");
+        }
       }
       break;
     default:
@@ -45,28 +71,6 @@ int8_t SendJsonPost(const char* payload, const char* serverUrl) {
     long long content_length = esp_http_client_get_content_length(client);
     ESP_LOGI(TAG, "HTTP POST Status = %d, content_length = %lld", status_code,
              content_length);
-
-    char buffer[256];
-    int len = esp_http_client_read(client, buffer, sizeof(buffer) - 1);
-    if (len >= 0) {
-      buffer[len] = '\0';  // Nu is het veilig een string
-
-      // 3. De parser aanroepen
-      float locationX = (float)GetJsonNumber(buffer, "x");
-      float locationY = (float)GetJsonNumber(buffer, "y");
-
-      ESP_LOGI(TAG, "locatie: x=%.2f, y=%.2f", locationX, locationY);
-
-      if (xSemaphoreTake(LocationMutex, pdMS_TO_TICKS(100)) == pdTRUE) {
-            LocationBasket.locationX = locationX;
-            LocationBasket.locationY = locationY;     
-            xSemaphoreGive(LocationMutex);
-            ButtonEventT event = EVENT_LOCATION;
-        xQueueSend(menuQueue, &event, NULL);
-        }
-    } else {
-      ESP_LOGE(TAG, "Mislukt om de response te lezen");
-    }
 
     esp_http_client_cleanup(client);
     return 0;
