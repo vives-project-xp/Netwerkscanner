@@ -36,10 +36,10 @@ export default function FloorVisionPro({ buildings = [] }) {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await fetch('/api/dev'); 
+        const res = await fetch('/api/heatmap'); 
         const data = await res.json();
           setScans(Array.isArray(data) ? data : []);
-          console.log('Database info (API /api/dev):', data);
+          console.log('Database info (API /api/heatmap):', data);
         setLoading(false);
       } catch (e) { setLoading(false); }
     };
