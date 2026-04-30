@@ -245,7 +245,7 @@ static int ble_gap_event_handler(struct ble_gap_event* event, void* arg) {
                event->disc.addr.val[1], event->disc.addr.val[0]);
       result.rssi = event->disc.rssi;
       result.scanId = 0;
-      result.timeDetection = esp_timer_get_time();
+      result.timeDetection = TimeSync::Get();
 
       if (xQueueSend(BluetoothQueue, &result, pdMS_TO_TICKS(100)) != pdPASS) {
         ESP_LOGE("scan task", "Queue vol!");
@@ -402,7 +402,7 @@ void ScannerTask(void* pvParameters) {
       PrintConfiguredChannels(&scanConfig);
       printf("free heap: %ld\n", esp_get_free_heap_size());
 
-      uint64_t timeStart = esp_timer_get_time();
+      uint64_t timeStart = TimeSync::Get();
       esp_err_t ret = esp_wifi_scan_start(&scanConfig, true);
       if (ret == ESP_ERR_WIFI_STATE) {
         ESP_LOGE("SCAN", "Wifi status onjuist, is hij wel geinitialiseerd?");
@@ -411,7 +411,7 @@ void ScannerTask(void* pvParameters) {
       } else if (ret != ESP_OK) {
         ESP_LOGE("SCAN", "Scan fout: %s", esp_err_to_name(ret));
       }
-      uint64_t timeEnd = esp_timer_get_time();
+      uint64_t timeEnd = TimeSync::Get();
       printf("scan klaar\n");
 
       uint16_t apCount = 0;
