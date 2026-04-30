@@ -21,6 +21,8 @@ export default function FloorVisionPro({ buildings = [] }) {
   const [loading, setLoading] = useState(true);
   const [activePointId, setActivePointId] = useState(null);
   const [ppm, setPpm] = useState(() => JSON.parse(localStorage.getItem('fv_ppm_config') || '{}'));
+  const [filterDateStart, setFilterDateStart] = useState('');
+  const [filterDateEnd, setFilterDateEnd] = useState('');
   
   const imgRef = useRef(null);
 
@@ -72,7 +74,13 @@ export default function FloorVisionPro({ buildings = [] }) {
     const meterToPercentX = (currentPpmValue / mapSize.width) * 100;
     const meterToPercentY = (currentPpmValue / mapSize.height) * 100;
 
+    const filterStartMs = filterDateStart ? new Date(filterDateStart).getTime() : -Infinity;
+    const filterEndMs = filterDateEnd ? new Date(filterDateEnd).getTime() : Infinity;
+
     const groups = scans.reduce((acc, scan) => {
+      const scanStartMs = parseInt(scan.scan_time_start || 0, 10) * 1000;
+      if (scanStartMs < filterStartMs || scanStartMs > filterEndMs) return acc;
+
       const key = `${scan.x}_${scan.y}`;
       if (!acc[key]) {
         acc[key] = {
@@ -103,7 +111,7 @@ export default function FloorVisionPro({ buildings = [] }) {
       if (a.gridX !== b.gridX) return a.gridX - b.gridX;
       return a.gridY - b.gridY;
     });
-  }, [scans, userLocation, currentPpmValue, mapSize, latestPointId]);
+  }, [scans, userLocation, currentPpmValue, mapSize, latestPointId, filterDateStart, filterDateEnd]);
 
   const activePointData = useMemo(() => 
     positionedPoints.find(p => p.id === activePointId), 
@@ -168,6 +176,15 @@ export default function FloorVisionPro({ buildings = [] }) {
                <option value="">Verdieping...</option>
                {currentBuilding?.floors?.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
             </select>
+            <div className="space-y-2 pt-2 border-t border-slate-700">
+              <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest">Datum Van</label>
+              <input type="datetime-local" value={filterDateStart} onChange={(e) => setFilterDateStart(e.target.value)} className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-[10px] text-white outline-none" />
+              <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest">Datum Tot</label>
+              <input type="datetime-local" value={filterDateEnd} onChange={(e) => setFilterDateEnd(e.target.value)} className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-[10px] text-white outline-none" />
+              {(filterDateStart || filterDateEnd) && (
+                <button onClick={() => {setFilterDateStart(''); setFilterDateEnd('');}} className="w-full py-1.5 text-[9px] text-slate-400 font-bold uppercase hover:text-rose-400 transition-colors">Reset Filter</button>
+              )}
+            </div>
           </div>
         </div>
 
