@@ -7,6 +7,12 @@ import re
 
 from fingerprint import update_scan_with_prediction,findLocation,updateLocation
 
+
+previousScanId = 0
+previousScanTimeStart = 0
+previousScanTimeEnd = 0
+
+
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": [
     "http://localhost:3000",
@@ -51,15 +57,21 @@ def upload():
         db = get_db()
         cursor = db.cursor()
 
-        # Nieuwe scan_id voor deze scan
-        scan_id = get_new_scan_id(cursor)
-
         device_id = safe_text(data.get("device_id"))
-        scan_time_start = data.get("scan_time_start", 0)
-        scan_time_end = data.get("scan_time_end", 0)
+        scanTimeStart = data.get("scan_time_start", 0)
+        scanTimeEnd = data.get("scan_time_end", 0)
         x = data.get("x", 0)
         y = data.get("y", 0)
         manual = data.get("manual", 0)
+
+        if scanTimeStart == previousScanTimeStart and scanTimeEnd == previousScanTimeEnd:
+            scan_id = previousScanId
+        else:
+            # Nieuwe scan_id voor deze scan
+            scan_id = get_new_scan_id
+            previousScanId = scan_id
+            previousScanTimeStart = scanTimeStart
+            previousScanTimeEnd = scanTimeEnd
 
         sql = """
             INSERT INTO heatmap (
@@ -95,7 +107,7 @@ def upload():
         for net in data.get("networks", []):
             cursor.execute(sql, (
                 scan_id,
-                device_id, scan_time_start, scan_time_end,
+                device_id, scanTimeStart, scanTimeEnd,
                 x, y, manual,
                 safe_text(net.get("ssid")),
                 safe_text(net.get("bssid")),
@@ -220,4 +232,19 @@ def get_time():
 # Start server
 # -----------------------------
 if __name__ == "__main__":
+    db = get_db()
+    cursor = db.cursor()
+
+    cursor.execute("SELECT IFNULL(MAX(scan_id), 0) FROM heatmap")
+    previousScanId = cursor.fetchone()[0]
+
+    if previousScanId > 0:
+        cursor.execute("SELECT time_start, time_end FROM heatmap WHERE scan_id = %s", (previousScanId,))
+        row = cursor.fetchone()
+        previousScanTimeStart = row[0]
+        previousScanTimeEnd = row[1]
+    else:
+        previousScanTimeStart = None
+        previousScanTimeEnd = None
+
     app.run(host="0.0.0.0", port=80)
