@@ -239,7 +239,7 @@ if __name__ == "__main__":
     previousScanId = cursor.fetchone()[0]
 
     if previousScanId > 0:
-        cursor.execute("SELECT time_start, time_end FROM heatmap WHERE scan_id = %s", (previousScanId,))
+        cursor.execute("SELECT scan_time_start, scan_time_end FROM heatmap WHERE scan_id = %s", (previousScanId,))
         row = cursor.fetchone()
         previousScanTimeStart = row[0]
         previousScanTimeEnd = row[1]
