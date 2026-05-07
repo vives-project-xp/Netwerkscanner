@@ -61,11 +61,14 @@ def updateLocation(x,y,scan_id):
         cursor.execute(query, data)
         db.commit()
         print(f"Successfully updated scan_id {scan_id} to coordinates ({x}, {y})")
+        db.close()
         return True
     except Exception as e:
         db.rollback()
         print(f"Error updating database: {e}")
+        db.close()
         return False
+    
 
 def findLocation(scan_id):#returns x,y
     db = get_db()

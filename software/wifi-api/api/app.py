@@ -4,13 +4,12 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import mysql.connector
 import re
+import sys
+import traceback
 
-from fingerprint import update_scan_with_prediction,findLocation,updateLocation
+from fingerprint import findLocation,updateLocation
 
 
-previousScanId = 0
-previousScanTimeStart = 0
-previousScanTimeEnd = 0
 
 
 app = Flask(__name__)
@@ -48,6 +47,7 @@ def get_new_scan_id(cursor):
 # -----------------------------
 @app.route('/upload', methods=['POST'])
 def upload():
+    global previousScanId, previousScanTimeStart, previousScanTimeEnd
     data = request.get_json()
 
     if not data:
@@ -68,7 +68,7 @@ def upload():
             scan_id = previousScanId
         else:
             # Nieuwe scan_id voor deze scan
-            scan_id = get_new_scan_id
+            scan_id = get_new_scan_id(cursor)
             previousScanId = scan_id
             previousScanTimeStart = scanTimeStart
             previousScanTimeEnd = scanTimeEnd
@@ -149,6 +149,8 @@ def upload():
         return jsonify({"status": "success", "scan_id": scan_id,"x":x,"y":y}), 200
 
     except Exception as e:
+        print("--- DATABASE/LOGIC ERROR ---", file=sys.stderr)
+        traceback.print_exc()
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # -----------------------------
@@ -244,6 +246,10 @@ def get_time():
 # Start server
 # -----------------------------
 if __name__ == "__main__":
+    global previousScanId, previousScanTimeStart, previousScanTimeEnd
+    previousScanId = 0
+    previousScanTimeStart = 0
+    previousScanTimeEnd = 0
     db = get_db()
     cursor = db.cursor()
 
