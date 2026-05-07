@@ -36,8 +36,6 @@ esp_err_t _http_event_handler(esp_http_client_event_t* evt) {
             xSemaphoreGive(LocationMutex);
 
             ButtonEventT event = EVENT_LOCATION;
-            // Use xQueueSend instead of FromISR since this is a callback, not a
-            // hardware ISR
             xQueueSend(menuQueue, &event, pdMS_TO_TICKS(10));
           }
         } else {

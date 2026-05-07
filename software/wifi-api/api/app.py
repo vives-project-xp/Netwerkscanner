@@ -72,7 +72,7 @@ def upload():
             previousScanId = scan_id
             previousScanTimeStart = scanTimeStart
             previousScanTimeEnd = scanTimeEnd
-
+        #als x en y 0 zijn 
         sql = """
             INSERT INTO heatmap (
                 scan_id,
@@ -140,6 +140,8 @@ def upload():
             ))
 
         db.commit()
+        #als x en y ingevuld zijn 
+        #zelfde maar in fingerprint
 
         # Fingerprinting alleen voor niet-manual scans
         if not manual:

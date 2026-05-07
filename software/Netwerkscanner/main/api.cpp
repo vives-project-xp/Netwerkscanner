@@ -68,7 +68,7 @@ const char* GetChipId() {
 char* CreatWifiJson(wifi_ap_record_t* aps, uint16_t start, uint16_t count,
                     uint64_t TimeStart, uint64_t TimeEnd, int32_t x = 0,
                     int32_t y = 0) {
-  // TODO tijdelijke fix
+
   if (count > 30) {
     count = 30;  // zorg er voor dat het niet crasht door teveel geheugen
   }
