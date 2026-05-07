@@ -127,7 +127,7 @@ def upload():
             )
         """
         for net in data.get("networks", []):
-            cursor.execute(final_sql, (
+            cursor.execute(final_sql , (
                 scan_id,
                 device_id, scanTimeStart, scanTimeEnd,
                 x, y, manual_value,
