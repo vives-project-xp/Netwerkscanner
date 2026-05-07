@@ -21,6 +21,8 @@ services:
       MYSQL_DATABASE: ${MYSQL_DATABASE}
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      FLASK_DEBUG: 1
+      PYTHONUNBUFFERED: 1
     ports:
       - "8081:80"
     depends_on:
