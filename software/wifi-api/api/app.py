@@ -5,7 +5,7 @@ from flask_cors import CORS
 import mysql.connector
 import re
 
-from fingerprint import update_scan_with_prediction,findLocation,updateLocation
+from fingerprint import findLocation,updateLocation
 
 
 previousScanId = 0
@@ -51,6 +51,7 @@ def get_new_scan_id_fingerprint(cursor):
 # -----------------------------
 @app.route('/upload', methods=['POST'])
 def upload():
+    global previousScanId, previousScanTimeStart, previousScanTimeEnd
     data = request.get_json()
 
     if not data:
@@ -66,35 +67,7 @@ def upload():
         x = data.get("x", 0)
         y = data.get("y", 0)
         manual = data.get("manual", 0)
-
-        # Bepaal welke tabel te gebruiken
-        if x != 0 or y != 0:
-            target_table = "fingerprint"
-        else:
-            target_table = "heatmap"
-
-        final_sql = sql.format(target_table)
-
-        # Bepaal de manual_value
-        if target_table == "fingerprint":
-            manual_value = 1
-        else:
-            manual_value = manual
-
-        if scanTimeStart == previousScanTimeStart and scanTimeEnd == previousScanTimeEnd:
-            scan_id = previousScanId
-        else:
-            # Nieuwe scan_id voor deze scan
-            if (target_table == "fingerprint"):
-                scan_id = get_new_scan_id_fingerprint(cursor)
-            elif (target_table == "heatmap"):
-                scan_id = get_new_scan_id_heatmap(cursor)
-
-            previousScanId = scan_id
-            previousScanTimeStart = scanTimeStart
-            previousScanTimeEnd = scanTimeEnd
-
-
+        
         # SQL statement voor beide tables
         sql = """
             INSERT INTO {} (
@@ -126,6 +99,36 @@ def upload():
                 %s, %s
             )
         """
+
+        # Bepaal welke tabel te gebruiken
+        if x != 0 or y != 0:
+            target_table = "fingerprint"
+        else:
+            target_table = "heatmap"
+
+        final_sql = sql.format(target_table)
+
+        # Bepaal de manual_value
+        if target_table == "fingerprint":
+            manual_value = 1
+        else:
+            manual_value = manual
+
+        if scanTimeStart == previousScanTimeStart and scanTimeEnd == previousScanTimeEnd:
+            scan_id = previousScanId
+        else:
+            # Nieuwe scan_id voor deze scan
+            if (target_table == "fingerprint"):
+                scan_id = get_new_scan_id_fingerprint(cursor)
+            elif (target_table == "heatmap"):
+                scan_id = get_new_scan_id_heatmap(cursor)
+
+            previousScanId = scan_id
+            previousScanTimeStart = scanTimeStart
+            previousScanTimeEnd = scanTimeEnd
+
+
+        
         for net in data.get("networks", []):
             cursor.execute(final_sql , (
                 scan_id,
