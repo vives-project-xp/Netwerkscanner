@@ -71,7 +71,7 @@ void TimeSync::Init() {
 
 void TimeSync::Sync() {
   uint64_t t = GetTimeFromServer();
-  if (t == 0) return;
+  if (t == 0) {return;}
 
   baseServerTime = t;
   baseEspTime = esp_timer_get_time();

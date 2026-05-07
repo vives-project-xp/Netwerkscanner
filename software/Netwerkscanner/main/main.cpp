@@ -16,7 +16,6 @@
 #include "nvs_flash.h"
 #include "services/gap/ble_svc_gap.h"
 
-
 // Moet hier staan anders compile error door combinatie van
 // lwIP en Arduino
 #ifdef INADDR_NONE
@@ -32,12 +31,12 @@
 #include "WiFi.h"
 #include "api.h"
 #include "http_post.h"
+#include "main.h"
 #include "ota_server.h"
 #include "screen.h"
 #include "simple_fingerprinting.h"
-#include "wifi_key.h"
-#include "main.h"
 #include "time_sync.h"
+#include "wifi_key.h"
 
 #define ENABLE_CPU_MONITOR 1
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
@@ -63,16 +62,16 @@ static volatile bool pressedSelect = 0;
 static volatile bool pressedBack = 0;
 static volatile bool pressedMulti = 0;
 
-//typedef enum {
-//  BUTTON_UP,
-//  BUTTON_DOWN,
-//  BUTTON_SELECT,
-//  BUTTON_BACK,
-//  BUTTON_MULTI,
-//  EVENT_WIFI_CONNECTED,
-//  EVENT_WIFI_DISCONNECTED,
-//  EVENT_LOCATION
-//} ButtonEventT;
+// typedef enum {
+//   BUTTON_UP,
+//   BUTTON_DOWN,
+//   BUTTON_SELECT,
+//   BUTTON_BACK,
+//   BUTTON_MULTI,
+//   EVENT_WIFI_CONNECTED,
+//   EVENT_WIFI_DISCONNECTED,
+//   EVENT_LOCATION
+// } ButtonEventT;
 
 typedef struct {
   wifi_ap_record_t* records;
@@ -96,14 +95,13 @@ typedef struct {
 
 ScanConfig_t GlobalScanConfig = {false, false, false};
 
-       QueueHandle_t menuQueue = NULL;
+QueueHandle_t menuQueue = NULL;
 static QueueHandle_t wifiQueue;
 static QueueHandle_t BluetoothQueue;
 static QueueSetHandle_t combinedQueueSet;
 
 TaskHandle_t xScannerHandle = NULL;
 TaskHandle_t xMonitorCpuHandle = NULL;
-
 
 #define WIFI_CONNECTED_BIT BIT0    // verbondenMetWifi
 #define SERVER_CONNECTED_BIT BIT1  // verbondenMetServer
@@ -131,31 +129,9 @@ wifi_country_t countryBe = {
                                          //.wifi_5g_channel_mask
 };
 
-LocationBasket_t LocationBasket; 
+LocationBasket_t LocationBasket;
 SemaphoreHandle_t LocationMutex;
 
-void ScanNetworks() {
-  nvs_flash_init();
-  esp_netif_init();
-  esp_event_loop_create_default();
-  esp_netif_create_default_wifi_sta();
-
-  wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-  esp_wifi_init(&cfg);
-  esp_wifi_set_mode(WIFI_MODE_STA);
-  esp_wifi_start();
-
-  esp_wifi_scan_start(NULL, true);
-
-  uint16_t n = 10;
-  wifi_ap_record_t aps[10];
-  esp_wifi_scan_get_ap_records(&n, aps);
-
-  for (int i = 0; i < 10; i++) {
-    PrintApInfo(&aps[i]);
-  }
-  return;
-}
 void CheckCpuFreq() {
   uint32_t freq_hz;
   // Get the frequency of the CPU clock
@@ -215,6 +191,38 @@ void MonitorCpuTask(void* pvParameters) {
     printf("%s\n", buffer);
 
     vTaskDelay(pdMS_TO_TICKS(5000));
+  }
+}
+
+int waitForUserNumber() {
+  char buffer[32];
+  int i = 0;
+
+  printf("Wachten op invoer (getal + Enter)...\n");
+
+  while (1) {
+    int c = fgetc(stdin);
+
+    if (c == EOF) {
+      vTaskDelay(pdMS_TO_TICKS(10));
+      continue;
+    }
+
+    putchar(c);
+
+    if (isdigit(c) || (c == '-' && i == 0)) {
+      if (i < sizeof(buffer) - 1) {
+        buffer[i++] = (char)c;
+      }
+    } else if (c == '\n' || c == '\r') {
+      if (i > 0) {
+        buffer[i] = '\0';
+        printf("\n");
+        return atoi(buffer);
+      } else {
+        printf("\nVoer eerst een getal in: ");
+      }
+    }
   }
 }
 
@@ -476,23 +484,19 @@ void JsonBuilderTask(void* pvParameters) {
       if (xQueueReceive(wifiQueue, &wifiData, 0) == pdPASS) {
         // Verwerk WiFi resultaten
         ESP_LOGI("JSON", "Bezig met verwerken van %d APs", wifiData.count);
-
+        int32_t x = waitForUserNumber();
+        int32_t y = waitForUserNumber();
         for (int i = 0; i < wifiData.count / networkPostCount; i++) {
-          // stuur networkPostCount per json, de laatste zal de rest ook
-          // verzenden.
-          // er kunnen dus meer dan 10 netwerken toekomen in de json
-          // TODO toekomst automatisch verdelen zodat met de minst aantal posts
-          // het meest kan verstuurd worden
           uint8_t start = i * networkPostCount;
           uint8_t count = networkPostCount;
           uint8_t verschil = (wifiData.count - (start + count));
-          if (verschil < 10) {
+          if (verschil < 20) {
             count = count + verschil;
           }
 
           char* payload =
               CreatWifiJson(wifiData.records, start, count, wifiData.timeStart,
-                            wifiData.timeEnd, 0, 0);
+                            wifiData.timeEnd, x, y);
           int8_t respons;
           if (payload != NULL) {
             respons = SendJsonPost(payload, serverUrl);
@@ -516,7 +520,7 @@ void JsonBuilderTask(void* pvParameters) {
       // Verwerk Bluetooth resultaten
       if (uxQueueMessagesWaiting(BluetoothQueue) >= bluethoothPostCount) {
         // Haal ze er alle 10 uit in een loop
-        
+
         printf("Batch van 10 Bluetooth resultaten verwerkt!\n");
       }
     } else {
@@ -526,7 +530,6 @@ void JsonBuilderTask(void* pvParameters) {
         xQueueReceive(BluetoothQueue, &btData, 0);
         // Voeg toe aan verzendlijst...
       }
-
     }
   }
 }
@@ -670,12 +673,13 @@ void MenuTask(void* pvParameters) {
         printf("Location:\n");
         if (xSemaphoreTake(LocationMutex, pdMS_TO_TICKS(100)) == pdTRUE) {
           DrawStringFast(10, 209, "       ", 0xffff, 0x000f, 3);
-          DrawStringFast(10, 209, Str("X",LocationBasket.locationX), 0xffff, 0x0001, 3);
-          DrawStringFast(70, 209, Str("Y",LocationBasket.locationY), 0xffff, 0x0001, 3);
+          DrawStringFast(10, 209, Str("X", LocationBasket.locationX), 0xffff,
+                         0x0001, 3);
+          DrawStringFast(70, 209, Str("Y", LocationBasket.locationY), 0xffff,
+                         0x0001, 3);
           xSemaphoreGive(LocationMutex);
         }
-        
-        
+
       } else if (ontvangenEvent == EVENT_WIFI_CONNECTED ||
                  ontvangenEvent == EVENT_WIFI_DISCONNECTED) {
         // Check de status zonder de taak te blokkeren
@@ -857,8 +861,6 @@ esp_err_t InitWifiBluethooth(void) {
 }
 
 void CreatButtonInterrupts() {
-  
-
   gpio_config_t io_conf = {};
   io_conf.intr_type = GPIO_INTR_ANYEDGE;
   io_conf.mode = GPIO_MODE_INPUT;
@@ -895,9 +897,9 @@ extern "C" void app_main(void) {
   LocationMutex = xSemaphoreCreateMutex();
   menuQueue = xQueueCreate(15, sizeof(ButtonEventT));
   if (menuQueue == NULL) {
-        ESP_LOGE("INIT", "Fatal: Could not create menuQueue!");
-        return;
-    }
+    ESP_LOGE("INIT", "Fatal: Could not create menuQueue!");
+    return;
+  }
   GpioSetup();
 
   esp_err_t status = InitWifiBluethooth();
@@ -905,7 +907,7 @@ extern "C" void app_main(void) {
     ESP_LOGE(LOGTAG, "Radio initialisatie mislukt!");
     return;
   }
-  
+
   wifiQueue = xQueueCreate(5, sizeof(scanWifiResults_t));
   BluetoothQueue = xQueueCreate(50, sizeof(scanBluethoothResults_t));
 
