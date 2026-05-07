@@ -4,13 +4,12 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import mysql.connector
 import re
+import sys
+import traceback
 
-from fingerprint import update_scan_with_prediction,findLocation,updateLocation
+from fingerprint import findLocation,updateLocation
 
 
-previousScanId = 0
-previousScanTimeStart = 0
-previousScanTimeEnd = 0
 
 
 app = Flask(__name__)
@@ -48,6 +47,7 @@ def get_new_scan_id(cursor):
 # -----------------------------
 @app.route('/upload', methods=['POST'])
 def upload():
+    global previousScanId, previousScanTimeStart, previousScanTimeEnd
     data = request.get_json()
 
     if not data:
@@ -68,7 +68,7 @@ def upload():
             scan_id = previousScanId
         else:
             # Nieuwe scan_id voor deze scan
-            scan_id = get_new_scan_id
+            scan_id = get_new_scan_id(cursor)
             previousScanId = scan_id
             previousScanTimeStart = scanTimeStart
             previousScanTimeEnd = scanTimeEnd
@@ -151,6 +151,8 @@ def upload():
         return jsonify({"status": "success", "scan_id": scan_id,"x":x,"y":y}), 200
 
     except Exception as e:
+        print("--- DATABASE/LOGIC ERROR ---", file=sys.stderr)
+        traceback.print_exc()
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # -----------------------------
@@ -219,6 +221,18 @@ def api_predict(scan_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
+@app.route('/delete')
+def delete():
+    try:
+        db = get_db()
+        cursor = db.cursor(dictionary=True)
+
+        cursor.execute("TRUNCATE heatmap")
+        return jsonify("everything for heatmap deleted"), 200
+
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+    
 # -----------------------------
 # Real Time
 # -----------------------------
@@ -234,6 +248,10 @@ def get_time():
 # Start server
 # -----------------------------
 if __name__ == "__main__":
+    global previousScanId, previousScanTimeStart, previousScanTimeEnd
+    previousScanId = 0
+    previousScanTimeStart = 0
+    previousScanTimeEnd = 0
     db = get_db()
     cursor = db.cursor()
 
@@ -241,7 +259,7 @@ if __name__ == "__main__":
     previousScanId = cursor.fetchone()[0]
 
     if previousScanId > 0:
-        cursor.execute("SELECT time_start, time_end FROM heatmap WHERE scan_id = %s", (previousScanId,))
+        cursor.execute("SELECT scan_time_start, scan_time_end FROM heatmap WHERE scan_id = %s", (previousScanId,))
         row = cursor.fetchone()
         previousScanTimeStart = row[0]
         previousScanTimeEnd = row[1]

@@ -61,11 +61,14 @@ def updateLocation(x,y,scan_id):
         cursor.execute(query, data)
         db.commit()
         print(f"Successfully updated scan_id {scan_id} to coordinates ({x}, {y})")
+        db.close()
         return True
     except Exception as e:
         db.rollback()
         print(f"Error updating database: {e}")
+        db.close()
         return False
+    
 
 def findLocation(scan_id):#returns x,y
     db = get_db()
@@ -135,94 +138,3 @@ def findLocation(scan_id):#returns x,y
 
 #x,y =findLocation(10)
 #updateLocation(x,y,1)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#!!!!!!!!!!!!!!app.py heeft dit voorlopig nog nodig!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# Bereken de afstand tussen gescande netwerken en handmatige netwerken op basis van RSSI-waarden
-def rssi_distance(scan_networks, manual_networks):
-    dist = 0
-    for bssid, rssi in scan_networks.items():
-        if bssid in manual_networks:
-            dist += (rssi - manual_networks[bssid]) ** 2
-        else:
-            dist += 100  # penalty voor ontbrekende AP
-    return math.sqrt(dist)
-
-# Voorspel de locatie door de dichtstbijzijnde handmatige scan te vinden
-def predict_location(scan_id):
-    db = get_db()
-    cursor = db.cursor(dictionary=True)
-
-    # Haal netwerken van de nieuwe scan op
-    cursor.execute("SELECT net_bssid, rssi FROM networks WHERE scan_id = %s", (scan_id,))
-    scan_nets = cursor.fetchall()
-    scan_map = {row["net_bssid"]: row["rssi"] for row in scan_nets}
-
-    # Haal alle handmatige punten op
-    cursor.execute("SELECT id, x, y FROM scans WHERE manual = 1")
-    manual_points = cursor.fetchall()
-
-    best_point = None
-    best_distance = float("inf")
-
-    for point in manual_points:
-        cursor.execute("SELECT net_bssid, rssi FROM networks WHERE scan_id = %s", (point["id"],))
-        nets = cursor.fetchall()
-        manual_map = {row["net_bssid"]: row["rssi"] for row in nets}
-
-        d = rssi_distance(scan_map, manual_map)
-
-        if d < best_distance:
-            best_distance = d
-            best_point = point
-
-    return best_point, best_distance
-    
-# Update de scan met de voorspelde locatie
-def update_scan_with_prediction(scan_id):
-    point, distance = predict_location(scan_id)
-
-    if point is None:
-        return False  # geen manual punten
-
-    db = get_db()
-    cursor = db.cursor()
-
-    cursor.execute("""
-        UPDATE scans
-        SET x = %s, y = %s
-        WHERE id = %s
-    """, (point["x"], point["y"], scan_id))
-
-    db.commit()
-    return True
-print("hello van fingerprint.py")
