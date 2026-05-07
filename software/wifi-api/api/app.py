@@ -217,6 +217,18 @@ def api_predict(scan_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
+@app.route('/delete')
+def delete():
+    try:
+        db = get_db()
+        cursor = db.cursor(dictionary=True)
+
+        cursor.execute("TRUNCATE heatmap")
+        return jsonify("everything for heatmap deleted"), 200
+
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+    
 # -----------------------------
 # Real Time
 # -----------------------------

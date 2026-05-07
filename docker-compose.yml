@@ -36,7 +36,7 @@ services:
       - ./software/netwerkscanner-dash:/app
       - /app/node_modules
     ports:
-      - "5173:5173"
+      - "80:5173"
     environment:
       - NODE_ENV=development
       - VITE_UPLOAD_SERVER=http://upload-server:3030
