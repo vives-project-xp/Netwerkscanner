@@ -15,7 +15,7 @@ esp_err_t _http_event_handler(esp_http_client_event_t* evt) {
     case HTTP_EVENT_ON_DATA:
       if (!esp_http_client_is_chunked_response(evt->client)) {
         int len = evt->data_len;
-        char buffer[256];
+        char buffer[400];
         if (len < sizeof(buffer)) {
           memcpy(buffer, evt->data, len);
           buffer[len] = '\0';  // Safe null-termination

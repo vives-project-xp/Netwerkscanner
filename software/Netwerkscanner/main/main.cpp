@@ -490,7 +490,7 @@ void JsonBuilderTask(void* pvParameters) {
           uint8_t start = i * networkPostCount;
           uint8_t count = networkPostCount;
           uint8_t verschil = (wifiData.count - (start + count));
-          if (verschil < 20) {
+          if (verschil < 10) {
             count = count + verschil;
           }
 
