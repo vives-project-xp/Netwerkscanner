@@ -38,8 +38,11 @@ def get_db():
         database=os.getenv("MYSQL_DATABASE")
     )
 
-def get_new_scan_id(cursor):
+def get_new_scan_id_heatmap(cursor):
     cursor.execute("SELECT IFNULL(MAX(scan_id), 0) + 1 FROM heatmap")
+    return cursor.fetchone()[0]
+def get_new_scan_id_fingerprint(cursor):
+    cursor.execute("SELECT IFNULL(MAX(scan_id), 0) + 1 FROM fingerprint")
     return cursor.fetchone()[0]
 
 # -----------------------------
@@ -64,17 +67,37 @@ def upload():
         y = data.get("y", 0)
         manual = data.get("manual", 0)
 
+        # Bepaal welke tabel te gebruiken
+        if x != 0 or y != 0:
+            target_table = "fingerprint"
+        else:
+            target_table = "heatmap"
+
+        final_sql = sql.format(target_table)
+
+        # Bepaal de manual_value
+        if target_table == "fingerprint":
+            manual_value = 1
+        else:
+            manual_value = manual
+
         if scanTimeStart == previousScanTimeStart and scanTimeEnd == previousScanTimeEnd:
             scan_id = previousScanId
         else:
             # Nieuwe scan_id voor deze scan
-            scan_id = get_new_scan_id(cursor)
+            if (target_table == "fingerprint"):
+                scan_id = get_new_scan_id_fingerprint(cursor)
+            elif (target_table == "heatmap"):
+                scan_id = get_new_scan_id_heatmap(cursor)
+
             previousScanId = scan_id
             previousScanTimeStart = scanTimeStart
             previousScanTimeEnd = scanTimeEnd
-        #als x en y 0 zijn 
+
+
+        # SQL statement voor beide tables
         sql = """
-            INSERT INTO heatmap (
+            INSERT INTO {} (
                 scan_id,
                 device_id, scan_time_start, scan_time_end,
                 x, y, manual,
@@ -103,12 +126,11 @@ def upload():
                 %s, %s
             )
         """
-
         for net in data.get("networks", []):
-            cursor.execute(sql, (
+            cursor.execute(final_sql, (
                 scan_id,
                 device_id, scanTimeStart, scanTimeEnd,
-                x, y, manual,
+                x, y, manual_value,
                 safe_text(net.get("ssid")),
                 safe_text(net.get("bssid")),
                 net.get("primary_channel", 0),
@@ -143,8 +165,8 @@ def upload():
         #als x en y ingevuld zijn 
         #zelfde maar in fingerprint
 
-        # Fingerprinting alleen voor niet-manual scans
-        if not manual:
+        # Fingerprinting alleen voor niet-manual scans in heatmap table
+        if not manual and target_table == "heatmap":
             x,y = findLocation(scan_id)
             updateLocation(x,y,scan_id)
 
