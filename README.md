@@ -98,6 +98,6 @@ git clone https://github.com/vives-project-xp/Netwerkscanner.git
 - [ ] Documentation
 - [ ] Deployment
 
-
 - [RaspberryPI Setup](doc/RaspberryPI.md)
 - [Brainstorm Diagram](doc/brainstorm.drawio)
+ - [Netwerkscanner Dash gebruikershandleiding](doc/netwerkscanner-dash/README.md)
