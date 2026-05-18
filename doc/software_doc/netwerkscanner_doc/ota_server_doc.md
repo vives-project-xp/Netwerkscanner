@@ -1,5 +1,5 @@
 # OTA SERVER
-Via de OTA server kunnen we nieuwe software versturen naar de ESP via WiFi, zonder het gebruik van kabels. Op de webpagina kies je een .bin bestand en de ESP installeerd zichzelf opnieuw.
+Via de OTA server kunnen we nieuwe software versturen naar de ESP via WiFi, zonder het gebruik van kabels. Op de webpagina kies je een .bin bestand en de ESP installeerd zichzelf opnieuw. Via de OTA server is het uploaden sneller.
 
 De 3 functies:
 - UploadGetHandler(): Wanneer je surf naar "http://10.10.219.58/" ontvangt de ESP de verzoek en stuurt het uploadHTML terug, wat de webpagina bevat.
