@@ -1,6 +1,26 @@
 # HTTP POST
-Deze code verstuurt de JSON naar de server en ontvangt de locatie die de server terug heeft.
-De functies:
-- SendJsonPost(): verstuurt de Json naar de server. Geeft een 0 terug als het lukt, 1 als het mislukt
-- _http_event_handler(): Wanneer de server antwoordt wordt deze functie automatisch aangeroepen. De server stuurt de berekende locatie terug als JSON. _http_event_handler haalt deze eruit.
-Deze wordt opgeslagen in LocationBasket. MenuTask gebruikt dan de informatie in LocationBasket aan de hand van EVENT_HANDLER (een bericht naar MenuTask)
+
+Deze code verstuurt JSON-data naar de server en ontvangt de berekende locatie terug.
+
+## Functies
+
+---
+
+### `SendJsonPost()`
+
+Verstuurt de JSON-data naar de server.
+
+### Returnwaarden
+- `0` → succesvol verzonden
+- `1` → fout bij verzenden
+
+---
+
+### `_http_event_handler()`
+
+Wanneer de server antwoordt, wordt deze functie automatisch aangeroepen.
+
+De server stuurt de berekende locatie terug als JSON.  
+`_http_event_handler()` haalt deze informatie uit het antwoord en slaat ze op in `LocationBasket`.
+
+Daarna gebruikt `MenuTask` deze informatie via `EVENT_HANDLER`, wat een bericht naar `MenuTask` verstuurt.

@@ -1,30 +1,59 @@
-## MENU
-De netwerkscanner beeld een klein menu voor. Er op kan je schakelen met welke soorten netwerken je wilt scannen. 
-De verschillende soorten netwerken zijn:
-    -Wifi 2.4
-    -Wifi 5
-    -Bluetooth
-    -Debug RTOS (extra informatie voor developer)
+# MENU
 
-Links boven wordt er ook afgebeeld met welk netwerk het device verbonden is met naam en IP adress
+De netwerkscanner toont een klein menu waarop gekozen kan worden welke soorten netwerken gescand moeten worden.
+
+## Ondersteunde netwerken
+
+- Wifi 2.4 GHz
+- Wifi 5 GHz
+- Bluetooth
+- Debug RTOS (extra informatie voor developers)
+
+Links bovenaan wordt ook weergegeven:
+- met welk netwerk het device verbonden is
+- de naam van het netwerk
+- het IP-adres
+
 ![Netwerkscanner scherm](img/sociale_media/netwerkscanner_scherm.png)
 
-## FUNCTIE
-Het device kan je besturen met de 6 knoppen op de zijkant met elk een aparte functie.
+---
+
+# FUNCTIES
+
+Het device kan bestuurd worden met de 6 knoppen aan de zijkant, elk met een aparte functie.
+
+## Knoppen
 
 (Van boven naar beneden)
-- Knop 1 = UP: Navigeert naar boven op het menu.
-- Knop 2 = DOWN: Navigeert naar benenden op het menu.
-- knop 3 = SELECT: Selecteert het netwerk dat je wil scannen.
-- knop 4 = BACK
-- Knop 5 = RESET: Hard reset het volledige device.
-- Knop 6 = Vrij
 
+- **Knop 1 = UP**
+  - Navigeert omhoog in het menu
 
+- **Knop 2 = DOWN**
+  - Navigeert omlaag in het menu
 
-## CODE
-Doordat de ESP maar 1 processor heeft kan hij technisch gezien maar 1 ding tergelijk doen. Aan de hand van FreeRTOS, een klein bestuursysteem, wat heel snel kan wisselen tussen taken zodat het lijkt dat het met meerdere tergerlijktijd bezig is. xTaskCreate() wordt gebruikt om de taak te creëren.
+- **Knop 3 = SELECT**
+  - Selecteert het netwerk dat gescand moet worden
 
+- **Knop 4 = BACK**
+
+- **Knop 5 = RESET**
+  - Voert een harde reset uit van het volledige device
+
+- **Knop 6 = Vrij**
+  - Momenteel niet gebruikt
+
+---
+
+# CODE
+
+Doordat de ESP maar 1 processor heeft, kan hij technisch gezien maar 1 taak tegelijk uitvoeren.
+
+Hiervoor wordt gebruik gemaakt van **FreeRTOS**, een klein besturingssysteem dat zeer snel wisselt tussen verschillende taken zodat het lijkt alsof meerdere taken tegelijkertijd uitgevoerd worden.
+
+`xTaskCreate()` wordt gebruikt om een taak aan te maken.
+
+```c
 xTaskCreate(
     ScannerTask,    // welke functie
     "ScannerTask",  // naam voor debugging
@@ -33,29 +62,143 @@ xTaskCreate(
     5,              // prioriteit
     NULL            // handle (optioneel)
 );
+```
 
- Wanneer verschillende taken data willen gebruiken maken we gebruik van queues. In queues wordt data in een rij geplaats waarin de eerste die binnen kwam, ook het eerste eruit gaat. Dit zorgt ervoor zodat er nooit tergelijk data gebruikt wordt. xQueueCreate() wordt gebruikt om de queue te maken, xQueueSend() om het te verzenden en xQueueReceive om het te lezen.
+---
 
-Taken:
+# QUEUES
 
-- MenuTask: Start het display op en wacht op berichten in de -menuqueue-. Die berichten komen via knopinterrupts of van de WiFi-verbindingstaak. Berichten zijn de verschillende knoppen (zoals UP, DOWN, SELECT, ...) maar ook de EVENT_WIFI_CONNECTED en portMAX_DELAY
+Wanneer verschillende taken dezelfde data willen gebruiken, wordt gebruik gemaakt van **queues**.
 
-- ScannerTask: Blijft kijken naar GlobalScanConfig (Houdt bij wat gescanned mag worden) om te weten wat gescanned moet worden.
-GlobalScanConfig stelt de frequentie banden dat in wifi_scan_config_t wordt opgesteld. Met
-esp_wifi_scan_start() wordt de wifi gescanned maar stopt ook de code tot dat de volledige scan klaar is. Via
-esp_wifi_scan_get_ap_records() worden de wifi resultaten gehaald en in de Queue gezt door JsonBuilderTask.
-Voor bluetooth wordt StartBleScan(5000) gebruikt wat een scan start voor 5 seconden. Via ble_gap_event_handler worden de gevonden apparaten een voor een in de BluetoothQueue geplaatst.
+Een queue werkt als een wachtrij:
+- de eerste data die binnenkomt
+- is ook de eerste data die gelezen wordt
 
-    (Frequentiebanden): wifi2_4Ghz alleen  → channel bitmap 0x3ffe
-                        wifi5Ghz alleen    → channel bitmap 0xfeffffe  
-                        Beide              → beide bitmaps actief
+Dit voorkomt dat meerdere taken tegelijkertijd dezelfde data gebruiken.
 
-- JsonBuilderTask: Verwerkt de scandata en verstuurt het naar de server. De taak gebruikt Queueset wat het mogelijk maakt om op meerdere queues tergerlijkertijd te wachten. Zodra dat de wifiqueue en bluetoothqueue komen activeerd de Queueset. De wifi data wordt verdeeld in 10 netwerken per HTTP POST erna wordt het geheugen weer vrijgesteld.
+## Gebruikte functies
 
-knoppensysteem:
-Wanneer de knoppen ingedrukt worden verandert de spanning wat een interrupt veroorzaakt. Maar wanneer een knop ingedrukt stuitert het knoppen een paar keer wat meerdere inputs veroorzaakt wat niet de bedoeling is. Daardoor maken we gebruik van Debouncing.
+- `xQueueCreate()`
+  - maakt een queue aan
 
+- `xQueueSend()`
+  - verstuurt data naar de queue
+
+- `xQueueReceive()`
+  - leest data uit de queue
+
+---
+
+# TAKEN
+
+## `MenuTask`
+
+Start het display op en wacht op berichten in de `menuqueue`.
+
+Deze berichten komen van:
+- knopinterrupts
+- de WiFi-verbindingstaak
+
+### Mogelijke berichten
+
+- `UP`
+- `DOWN`
+- `SELECT`
+- `BACK`
+- `EVENT_WIFI_CONNECTED`
+- `portMAX_DELAY`
+
+---
+
+## `ScannerTask`
+
+Blijft controleren wat gescand mag worden via `GlobalScanConfig`.
+
+`GlobalScanConfig` bepaalt welke frequentiebanden gebruikt worden in `wifi_scan_config_t`.
+
+### WiFi scanning
+
+Met:
+
+```c
+esp_wifi_scan_start()
+```
+
+wordt een WiFi-scan gestart.
+
+De code wacht tot de scan volledig klaar is.
+
+Daarna worden de resultaten opgehaald met:
+
+```c
+esp_wifi_scan_get_ap_records()
+```
+
+De resultaten worden vervolgens in een queue geplaatst voor `JsonBuilderTask`.
+
+---
+
+### Bluetooth scanning
+
+Bluetooth scanning gebeurt via:
+
+```c
+StartBleScan(5000)
+```
+
+Dit start een scan van 5 seconden.
+
+Via:
+
+```c
+ble_gap_event_handler
+```
+
+worden gevonden apparaten één voor één in de `BluetoothQueue` geplaatst.
+
+---
+
+## Frequentiebanden
+
+| Scanmodus | Channel bitmap |
+|---|---|
+| Wifi 2.4 GHz | `0x3ffe` |
+| Wifi 5 GHz | `0xfeffffe` |
+| Beide | beide bitmaps actief |
+
+---
+
+## `JsonBuilderTask`
+
+Verwerkt de scandata en verstuurt deze naar de server.
+
+De taak gebruikt een **QueueSet**, waardoor tegelijkertijd op meerdere queues gewacht kan worden.
+
+Zodra data beschikbaar is in:
+- `WiFiQueue`
+- `BluetoothQueue`
+
+wordt de QueueSet actief.
+
+### Werking
+
+- WiFi-data wordt verdeeld in blokken van 10 netwerken per HTTP POST
+- daarna wordt het gebruikte geheugen opnieuw vrijgemaakt
+
+---
+
+# KNOPPENSYSTEEM
+
+Wanneer een knop ingedrukt wordt, verandert de spanning en ontstaat een interrupt.
+
+Een knop "stuitert" echter kort bij het indrukken, waardoor meerdere signalen ontstaan terwijl slechts één input gewenst is.
+
+Hiervoor wordt gebruik gemaakt van **debouncing**.
+
+```c
 if (now - lastIsrTimeUp < 50000) {  // 50ms in microseconden
     return;  // negeer dit signaal
 }
-Met Debouncing wordt de 50ms seconden na de eerste input genegeert zodat het als 1 input blijft.
+```
+
+Met debouncing worden alle signalen binnen de eerste 50 ms genegeerd zodat slechts één input geregistreerd wordt.

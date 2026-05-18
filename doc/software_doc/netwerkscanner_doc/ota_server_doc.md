@@ -1,10 +1,51 @@
 # OTA SERVER
-Via de OTA server kunnen we nieuwe software versturen naar de ESP via WiFi, zonder het gebruik van kabels. Op de webpagina kies je een .bin bestand en de ESP installeerd zichzelf opnieuw. Via de OTA server is het uploaden sneller.
 
-De 3 functies:
-- UploadGetHandler(): Wanneer je surf naar "http://10.10.219.58/" ontvangt de ESP de verzoek en stuurt het uploadHTML terug, wat de webpagina bevat.
-- UploadPostHandler(): ontvangt en installeert de .bin. Bij het uploaden van een bestand bia een HTML formulier, steekt je browser extra informatie als text erbij. De ESP verwacht alleen code, wat het dus zou laten crashen. ESP32 firmware bestanden beginnen dus altijd met de byte 0xE9. Het negeert de extra informatie en installeert direct het echte code.
+Via de OTA server kunnen we nieuwe software versturen naar de ESP via WiFi, zonder het gebruik van kabels.
 
-- OtaWebserverTask(): start de webserver. Registreert 2 routes
-    - / (GET): toont uploadpagina
-    - /update (POST): ontvang en installeer .bin
+Op de webpagina kies je een `.bin` bestand en de ESP installeert zichzelf opnieuw.  
+Via de OTA server verloopt het uploaden sneller en eenvoudiger.
+
+## Functies
+
+---
+
+### `UploadGetHandler()`
+
+Wanneer je surft naar:
+
+```text
+http://10.10.219.58/
+```
+
+ontvangt de ESP het verzoek en stuurt het `uploadHTML` terug, wat de webpagina bevat voor het uploaden van firmware.
+
+---
+
+### `UploadPostHandler()`
+
+Deze functie ontvangt en installeert het `.bin` bestand.
+
+Bij het uploaden van een bestand via een HTML-formulier stuurt de browser extra tekstinformatie mee.  
+De ESP verwacht echter alleen firmwarecode, waardoor dit anders een crash zou veroorzaken.
+
+ESP32 firmwarebestanden beginnen altijd met de byte:
+
+```text
+0xE9
+```
+
+De functie negeert alle extra informatie vóór deze byte en installeert daarna direct de echte firmwarecode.
+
+---
+
+### `OtaWebserverTask()`
+
+Start de webserver en registreert de benodigde routes.
+
+### Routes
+
+- `/` (`GET`)
+  - toont de uploadpagina
+
+- `/update` (`POST`)
+  - ontvangt en installeert het `.bin` bestand
