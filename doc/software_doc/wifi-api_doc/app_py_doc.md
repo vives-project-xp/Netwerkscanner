@@ -1,6 +1,6 @@
 ## APP.PY
 Dit is de servercode. Door deze code weet de server wat het moet doen met data dat de ESP naar het stuurt.
-Deserver is ontwikkeld in PYthon met het Flask framework. Het ontvangt de scandata van de ESP en slaat het op in een MariaDB database aan de ahnd van een REST API beschikbaar voor de dashboard.
+De server is ontwikkeld in Python met het Flask framework. Het ontvangt de scandata van de ESP en slaat het op in een MariaDB database aan de ahnd van een REST API beschikbaar voor de dashboard.
 
 Flask maakt gebruik van routes, de server draait op http://10.20.10.24:8081 en de verschillende adressen waarop de server luistert:
 - /upload: het eindpunt waar de ESP zijn data naartoe stuurt. De server controleert of de JSON geldig is en maakt een nieuwe scan_id aan wat een unieke nummer is voor elke scan. Loopt over elk netwerk in "netwerk" in de JSON. Slaat elk netwerk op in de database. Als de "Manual" waarde in de JSON nul is, berekent de server de locatie via fingerprinting (meer hierover in fingerpinting.py). Als het niet nul is slaat het de locatie over. Tenlaatste stuurt de server een bevestiging terug.

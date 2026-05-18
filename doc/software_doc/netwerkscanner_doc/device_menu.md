@@ -20,7 +20,6 @@ Het device kan je besturen met de 6 knoppen op de zijkant met elk een aparte fun
 - Knop 5 = RESET: Hard reset het volledige device.
 - Knop 6 = Vrij
 
-## HARDWARE
 
 
 ## CODE
