@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
-import { Database, Layers, RefreshCw, MapPin, ZoomIn, ZoomOut, Maximize, Ruler, X, ArrowLeft } from 'lucide-react';
+import { Database, Layers, RefreshCw, MapPin, ZoomIn, ZoomOut, Maximize, Ruler, ArrowLeft } from 'lucide-react';
 
 const snapToGrid = (percent, mapDimPixels, ppm) => {
   if (ppm === 0) return percent;
@@ -10,7 +10,7 @@ const snapToGrid = (percent, mapDimPixels, ppm) => {
 };
 
 export default function FloorVisionPro({ buildings = [] }) {
-  const [scans, setScans] = useState([]); 
+  const [scans, setScans] = useState([]);
   const [selectedBuildingId, setSelectedBuildingId] = useState('');
   const [selectedFloorId, setSelectedFloorId] = useState('');
   const [isCalibrating, setIsCalibrating] = useState(false);
@@ -20,12 +20,13 @@ export default function FloorVisionPro({ buildings = [] }) {
   const [rulerPoints, setRulerPoints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activePointId, setActivePointId] = useState(null);
+  const [expandedNetworkIdx, setExpandedNetworkIdx] = useState(null); // Nieuw: Onthoudt welk netwerk is uitgeklapt
   const [ppm, setPpm] = useState(() => JSON.parse(localStorage.getItem('fv_ppm_config') || '{}'));
   const [filterDateStart, setFilterDateStart] = useState('');
   const [filterDateEnd, setFilterDateEnd] = useState('');
   
   const imgRef = useRef(null);
-
+  
   const updateMapSize = () => {
     if (imgRef.current) {
       setMapSize({
@@ -40,11 +41,12 @@ export default function FloorVisionPro({ buildings = [] }) {
       try {
         const res = await fetch('/api/heatmap'); 
         const data = await res.json();
-          setScans(Array.isArray(data) ? data : []);
-          console.log('Database info (API /api/heatmap):', data);
+        setScans(Array.isArray(data) ? data : []);
+        console.log('Database info (API /api/heatmap):', data);
         setLoading(false);
       } catch (e) { setLoading(false); }
     };
+  
     fetchData();
     const interval = setInterval(fetchData, 5000); 
     return () => clearInterval(interval);
@@ -79,6 +81,7 @@ export default function FloorVisionPro({ buildings = [] }) {
 
     const groups = scans.reduce((acc, scan) => {
       const scanStartMs = parseInt(scan.scan_time_start || 0, 10) * 1000;
+     
       if (scanStartMs < filterStartMs || scanStartMs > filterEndMs) return acc;
 
       const key = `${scan.x}_${scan.y}`;
@@ -94,7 +97,25 @@ export default function FloorVisionPro({ buildings = [] }) {
       }
       const rssiVal = parseInt(scan.net_rssi || -100, 10);
       const scanIdVal = parseInt(scan.scan_id || scan.scanId || 0, 10);
-      acc[key].networks.push({ ssid: scan.net_ssid, bssid: scan.net_bssid, rssi: rssiVal });
+      
+      // Hier slaan we de extra gevraagde velden op in het netwerk-object
+      acc[key].networks.push({ 
+        ssid: scan.net_ssid, 
+        bssid: scan.net_bssid, 
+        rssi: rssiVal,
+        country: scan.country,
+        bandwidth: {
+         1: '20',
+         2: '40',
+         3: '80',
+         4: '160',
+         5: '80 + 80'
+}[scan.bandwidth] || scan.bandwidth,
+        authMode: scan.auth_mode,
+        primaryChannel: scan.primary_channel,
+        secondaryChannel: scan.secondary_channel
+      });
+
       if (rssiVal > acc[key].maxRssi) acc[key].maxRssi = rssiVal;
       if (!Number.isNaN(scanIdVal) && scanIdVal > acc[key].maxScanId) {
         acc[key].maxScanId = scanIdVal;
@@ -192,20 +213,69 @@ export default function FloorVisionPro({ buildings = [] }) {
            {activePointData ? (
              <div className="animate-in slide-in-from-left duration-200">
                 <div className="p-4 bg-slate-800 border-b border-slate-700">
-                  <button onClick={() => setActivePointId(null)} className="flex items-center gap-2 text-blue-400 text-[10px] font-bold uppercase mb-3 hover:text-white transition-colors">
+                  {/* Bij teruggaan resetten we ook de uitgeklapte accordeon state */}
+                  <button onClick={() => { setActivePointId(null); setExpandedNetworkIdx(null); }} className="flex items-center gap-2 text-blue-400 text-[10px] font-bold uppercase mb-3 hover:text-white transition-colors">
                     <ArrowLeft size={14}/> Terug
                   </button>
                   <h3 className="text-white font-mono text-xl font-bold">{activePointData.gridX}m, {activePointData.gridY}m</h3>
                 </div>
+                
+                {/* INTERACTIEVE NETWERK ACCORDEON LIJST */}
                 <div className="p-3 space-y-2">
-                  {activePointData.networks.sort((a,b) => b.rssi - a.rssi).map((n, idx) => (
-                    <div key={idx} className="p-3 rounded-xl bg-slate-800 border border-slate-700">
-                      <div className="flex justify-between items-start">
-                        <p className="text-white text-[12px] font-bold truncate pr-2">{n.ssid || "Hidden"}</p>
-                        <span className={`text-[12px] font-black ${n.rssi > -60 ? 'text-emerald-400' : 'text-blue-400'}`}>{n.rssi}</span>
+                  {activePointData.networks.sort((a,b) => b.rssi - a.rssi).map((n, idx) => {
+                    const isExpanded = expandedNetworkIdx === idx;
+                    return (
+                      <div 
+                        key={idx} 
+                        className={`p-3 rounded-xl bg-slate-800 border transition-all duration-200 cursor-pointer ${
+                          isExpanded ? 'border-blue-500 shadow-lg' : 'border-slate-700 hover:border-slate-500'
+                        }`}
+                        onClick={() => setExpandedNetworkIdx(isExpanded ? null : idx)}
+                      >
+                        {/* Hoofdregel */}
+                        <div className="flex justify-between items-center">
+                          <div className="flex flex-col min-w-0 flex-1 pr-2">
+                            <p className="text-white text-[12px] font-bold truncate">{n.ssid || "Hidden"}</p>
+                            <span className="text-[9px] text-slate-400 font-mono truncate">{n.bssid}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className={`text-[12px] font-black ${n.rssi > -60 ? 'text-emerald-400' : 'text-blue-400'}`}>
+                              {n.rssi}
+                            </span>
+                            <span className={`text-slate-500 text-[9px] transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}>
+                              ▼
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Extra non-sensitive details (klapt uit bij klik) */}
+                        {isExpanded && (
+                          <div className="mt-3 pt-3 border-t border-slate-700/60 grid grid-cols-2 gap-x-2 gap-y-2 text-[10px] animate-in fade-in duration-150">
+                            <div>
+                              <span className="block text-[8px] font-black text-slate-500 uppercase tracking-wider">Land</span>
+                              <span className="text-slate-300 font-medium">{n.country || 'Onbekend'}</span>
+                            </div>
+                            <div>
+                              <span className="block text-[8px] font-black text-slate-500 uppercase tracking-wider">Bandbreedte</span>
+                              <span className="text-slate-300 font-medium">{n.bandwidth ? `${n.bandwidth} MHz` : 'Onbekend'}</span>
+                            </div>
+                            <div className="col-span-2">
+                              <span className="block text-[8px] font-black text-slate-500 uppercase tracking-wider">Beveiliging (Auth)</span>
+                              <span className="text-slate-300 font-medium truncate block">{n.authMode || 'Onbekend'}</span>
+                            </div>
+                            <div>
+                              <span className="block text-[8px] font-black text-slate-500 uppercase tracking-wider">Primair Kanaal</span>
+                              <span className="text-slate-300 font-mono">{n.primaryChannel || '-'}</span>
+                            </div>
+                            <div>
+                              <span className="block text-[8px] font-black text-slate-500 uppercase tracking-wider">Secundair Kanaal</span>
+                              <span className="text-slate-300 font-mono">{n.secondaryChannel || '-'}</span>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
              </div>
            ) : userLocation ? (
@@ -213,10 +283,10 @@ export default function FloorVisionPro({ buildings = [] }) {
                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2 px-1"><Layers size={12}/> Punten ({positionedPoints.length})</p>
                {positionedPoints.map((gp, i) => (
                  <div key={i} className="p-3 rounded-xl border border-slate-700 bg-slate-800 hover:border-blue-500/50 cursor-pointer transition-all" onClick={() => setActivePointId(gp.id)}>
-                    <div className="flex justify-between items-center">
+                   <div className="flex justify-between items-center">
                         <span className="text-[10px] font-bold text-white">{gp.gridX}m, {gp.gridY}m</span>
                         <div className={`h-2 w-2 rounded-full ${gp.maxRssi > -60 ? 'bg-emerald-500' : 'bg-blue-500'}`} />
-                    </div>
+                   </div>
                  </div>
                ))}
                <button onClick={() => setUserLocation(null)} className="w-full py-3 text-[10px] text-slate-500 font-bold uppercase hover:text-rose-500 transition-colors">Reset Positie</button>
@@ -268,9 +338,9 @@ export default function FloorVisionPro({ buildings = [] }) {
                       />
                     )}
 
-                    {/* DATA PUNTEN (De 0,0 bol is nu een van deze punten) */}
+                    {/* DATA PUNTEN */}
                     {positionedPoints.map((gp, i) => (
-                        <div key={i} className="absolute z-[150]" style={{ left: `${gp.renderX}%`, top: `${gp.renderY}%`, transform: 'translate(-50%, -50%)' }}>
+                      <div key={i} className="absolute z-[150]" style={{ left: `${gp.renderX}%`, top: `${gp.renderY}%`, transform: 'translate(-50%, -50%)' }}>
                            <button 
                               onClick={(e) => { e.stopPropagation(); setActivePointId(gp.id); }}
                               className={`rounded-full border-[2px] border-white transition-all bg-black ${activePointId === gp.id ? 'scale-150 ring-4 ring-blue-500/30' : 'hover:scale-125'} ${gp.isLatestScan ? 'ring-4 ring-yellow-400/60 shadow-[0_0_12px_rgba(234,179,8,0.65)]' : ''}`}
@@ -280,7 +350,7 @@ export default function FloorVisionPro({ buildings = [] }) {
                                 borderColor: gp.isLatestScan ? '#f59e0b' : (gp.maxRssi > -60 ? '#10b981' : '#3b82f6')
                               }}
                             />
-                        </div>
+                      </div>
                     ))}
 
                     {/* KALIBRATIE LIJN */}

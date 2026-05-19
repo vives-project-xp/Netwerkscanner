@@ -1,16 +1,19 @@
 import os
+import time
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import mysql.connector
 import re
 
-from fingerprint import findLocation,updateLocation
+from fingerprint import findLocation, updateLocation
 
 
 previousScanId = 0
 previousScanTimeStart = 0
 previousScanTimeEnd = 0
+MAX_DB_CONNECT_RETRIES = 20
+DB_RETRY_DELAY_SECONDS = 3
 
 
 app = Flask(__name__)
@@ -32,12 +35,27 @@ def safe_text(value):
 
 
 def get_db():
-    return mysql.connector.connect(
-        host="mariadb",
-        user=os.getenv("MYSQL_USER"),
-        password=os.getenv("MYSQL_PASSWORD"),
-        database=os.getenv("MYSQL_DATABASE")
-    )
+    host = os.getenv("MYSQL_HOST", "mariadb")
+    user = os.getenv("MYSQL_USER")
+    password = os.getenv("MYSQL_PASSWORD")
+    database = os.getenv("MYSQL_DATABASE")
+
+    for attempt in range(1, MAX_DB_CONNECT_RETRIES + 1):
+        try:
+            return mysql.connector.connect(
+                host=host,
+                user=user,
+                password=password,
+                database=database,
+            )
+        except mysql.connector.Error as e:
+            if attempt == MAX_DB_CONNECT_RETRIES:
+                raise
+            print(
+                f"MariaDB connect attempt {attempt}/{MAX_DB_CONNECT_RETRIES} failed: {e}. "
+                f"Retrying in {DB_RETRY_DELAY_SECONDS}s..."
+            )
+            time.sleep(DB_RETRY_DELAY_SECONDS)
 
 def get_new_scan_id_heatmap(cursor):
     cursor.execute("SELECT IFNULL(MAX(scan_id), 0) + 1 FROM heatmap")
@@ -264,7 +282,7 @@ if __name__ == "__main__":
     previousScanId = cursor.fetchone()[0]
 
     if previousScanId > 0:
-        cursor.execute("SELECT time_start, time_end FROM heatmap WHERE scan_id = %s", (previousScanId,))
+        cursor.execute("SELECT scan_time_start, scan_time_end FROM heatmap WHERE scan_id = %s", (previousScanId,))
         row = cursor.fetchone()
         previousScanTimeStart = row[0]
         previousScanTimeEnd = row[1]

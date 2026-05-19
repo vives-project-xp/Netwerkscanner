@@ -4,6 +4,7 @@
 [wifi research](./varia/esp/wifi%20research.md)  
 [wifi handige img](./varia/assets/)  
 [docker/fingerprinting](./docFingerprint.py.md)
+[REST API overzicht](./rest-api-overzicht.md)
 
 Deze map bevat alle projectdocumentatie voor de Netwerkscanner. Het doel is om de keuzes, ontwerpen en instructies die niet in de broncode thuishoren, centraal te bewaren zodat het project makkelijk te begrijpen, te onderhouden en te presenteren is.
 
