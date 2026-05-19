@@ -101,3 +101,25 @@ git clone https://github.com/vives-project-xp/Netwerkscanner.git
 - [RaspberryPI Setup](doc/RaspberryPI.md)
 - [Brainstorm Diagram](doc/brainstorm.drawio)
  - [Netwerkscanner Dash gebruikershandleiding](doc/netwerkscanner-dash/README.md)
+
+##  Documentatie
+
+### Software documentatie
+
+#### Netwerkscanner
+- [API C++ documentatie](doc/software_doc/netwerkscanner_doc/api_cpp_doc.md)
+- [Device menu](doc/software_doc/netwerkscanner_doc/device_menu.md)
+- [HTTP POST C++ documentatie](doc/software_doc/netwerkscanner_doc/http_post_cpp_doc.md)
+- [OTA server documentatie](doc/software_doc/netwerkscanner_doc/ota_server_doc.md)
+- [Screen C++ documentatie](doc/software_doc/netwerkscanner_doc/screen_cpp_doc.md)
+- [Time sync documentatie](doc/software_doc/netwerkscanner_doc/time_sync_doc.md)
+
+#### WiFi API
+- [App Python documentatie](doc/software_doc/wifi-api_doc/app_py_doc.md)
+- [Fingerprint Python documentatie](doc/software_doc/wifi-api_doc/fingerprint_py_doc.md)
+
+### Overige documenten
+- [Brainstorm](doc/brainstorm.drawio)
+- [Fingerprint Python doc](doc/docFingerprint.py.md)
+- [Projectfiche Netwerk Scanner](doc/PX%204%20-%20Projectfiche%20Netwerk%20Sca....md)
+- [Roadmap](doc/readmap.md)
