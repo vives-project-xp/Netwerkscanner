@@ -90,10 +90,10 @@ git clone https://github.com/vives-project-xp/Netwerkscanner.git
 ## Status
 
 - [x] Planning
-- [ ] Development
-- [ ] Testing
-- [ ] Documentation
-- [ ] Deployment
+- [x] Development
+- [x] Testing
+- [x] Documentation
+- [x] Deployment
 
 - [RaspberryPI Setup](doc/RaspberryPI.md)
 - [Brainstorm Diagram](doc/brainstorm.drawio)
