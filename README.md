@@ -20,7 +20,7 @@ de studenten die aan dit project werken zijn:
 | Spotnit            | [<img src="https://github.com/Spotnit.png" width="50" height="50">](https://github.com/Spotnit)             |
 
 ## testen positie bepaling
-[testen van positie bepaling via wifi](./doc/positiebepaling/esp_testen.md)
+[testen van positie bepaling via wifi](.doc/positiebepaling_ideas/esp_testen.md)
 
 ## Functies
 
