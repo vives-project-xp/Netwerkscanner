@@ -25,9 +25,9 @@ de studenten die aan dit project werken zijn:
 ## Functies
 
 - [ ] netwerkscanning ( inkaart bregen van apparaten binnen een lokaal netwerk)
-- [ ] heatmap visualisatie van netwerkactiviteit
-- [ ] rapportage en logging van gedetecteerde apparaten
-- [ ] real-time monitoring dashboard
+- [+] heatmap visualisatie van netwerkactiviteit
+- [+] rapportage en logging van gedetecteerde apparaten
+- [+] real-time monitoring dashboard
 
 ## Projectstructuur
 
@@ -48,13 +48,10 @@ Netwerkscanner/
 └── .gitignore
 ```
 
-## Vereisten
 
-- [Python versie / andere requirements]
-- [Hardware requirements]
-- [Andere dependencies]
 
 ## Installatie
+zie documentatie
 
 ### Hardware Setup
 
