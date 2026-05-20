@@ -5,7 +5,7 @@ Dit is de servercode van het project.
 Via deze code weet de server wat hij moet doen met de data die de ESP verstuurt.
 
 De server is ontwikkeld in Python met het Flask-framework.  
-Hij ontvangt scandata van de ESP en slaat deze op in een MariaDB-database via een REST API die beschikbaar is voor het dashboard.
+Hij ontvangt scandata van de ESP en slaat deze op in een MariaDB-database via een API die beschikbaar is voor het dashboard.
 
 ---
 
